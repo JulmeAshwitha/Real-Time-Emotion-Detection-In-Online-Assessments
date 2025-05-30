@@ -1,0 +1,1839 @@
+<!--<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Dashboard</title>
+  <style>
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+      transition: all 0.3s ease;
+    }
+
+    body {
+      background: linear-gradient(to bottom right, #e3f2fd, #ffffff);
+      overflow-x: hidden;
+      color: #333;
+    }
+
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .student-profile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+      background-image: url('{{ url_for('static', filename='emvi-logo.jpeg') }}');
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .student-info div {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      width: fit-content;
+      backdrop-filter: blur(4px);
+    }
+
+    .logout {
+      background: white;
+      border: none;
+      color: #0d47a1;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    .logout:hover {
+      background: #f1f1f1;
+      transform: scale(1.05);
+    }
+
+    .greeting {
+      padding: 20px 30px;
+      font-size: 20px;
+      color: #0d47a1;
+      background-color: #ffffffb4;
+    }
+
+    .tabs {
+      display: flex;
+      background: #ffffff;
+      padding-left: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab {
+      padding: 14px 24px;
+      cursor: pointer;
+      color: #333;
+      font-weight: 500;
+      position: relative;
+      margin-right: 12px;
+      border-radius: 10px 10px 0 0;
+    }
+
+    .tab::after {
+      content: '';
+      display: block;
+      height: 3px;
+      width: 0;
+      background: #0d47a1;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      transition: width 0.3s;
+    }
+
+    .tab:hover::after, .tab.active::after {
+      width: 100%;
+    }
+
+    .tab.active {
+      color: #0d47a1;
+      font-weight: bold;
+    }
+
+    a.tab {
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .main-content {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 24px;
+      gap: 20px;
+    }
+
+    .assignments {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .assignment-card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeIn 0.6s forwards;
+    }
+
+    .assignment-card:hover {
+      transform: scale(1.02);
+    }
+
+    .assignment-card button {
+      padding: 10px 20px;
+      background: #0d47a1;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    }
+
+    .assignment-card button:hover {
+      background: #1565c0;
+      transform: scale(1.05);
+    }
+
+    .todo {
+      flex: 1;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .todo h4 {
+      font-size: 20px;
+      color: #0d47a1;
+      margin-bottom: 10px;
+    }
+
+    .todo ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .todo li {
+      background: #f0f8ff;
+      margin: 8px 0;
+      padding: 10px 15px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .todo li.completed span {
+      text-decoration: line-through;
+      color: #888;
+    }
+
+    .todo input[type="checkbox"] {
+      margin-right: 10px;
+    }
+
+    .todo form {
+      display: inline;
+    }
+
+    .todo input[type="text"] {
+      padding: 8px;
+      width: 70%;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .todo button {
+      background-color: #52ab98;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+
+    .todo button:hover {
+      background-color: #3d8b80;
+    }
+
+    .todo .delete-btn {
+      background-color: #e74c3c;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .todo .delete-btn:hover {
+      background-color: #c0392b;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .dark-mode {
+      background-color: #121212;
+      color: #f0f0f0;
+    }
+
+    .dark-mode .topbar,
+    .dark-mode .tabs,
+    .dark-mode .assignment-card,
+    .dark-mode .todo {
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+    }
+
+    #videoModal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #videoModal > div {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    #videoFeed {
+      display: none;
+    }
+    
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="student-profile">
+      <div class="profile-pic"></div>
+      
+        <div class="student-info">
+          <div>{{ name }}</div>
+          <div>Roll No: {{ rollno }}</div>
+
+
+      </div>
+    </div>
+    <div>
+      <button onclick="toggleDarkMode()" style="margin-right: 10px;">🌙</button>
+      <button class="logout" onclick="window.location.href='/logout'">Logout</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active">Dashboard</div>
+    <div class="tab">Assignments</div>
+    <div class="tab" onclick="window.location.href='/performance-overall?username={{ name }}'">Performance</div>
+    <div class="tab">More ▸</div>
+  </div>
+
+  <div class="main-content">
+    <div class="assignments">
+      {% for assignment in assignments %}
+      <div class="assignment-card">
+        <div>
+          <strong>{{ assignment.title }}</strong><br/>
+          <small>Click to start</small>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button onclick="attemptAssignment('{{ assignment._id }}')">Start ➤</button>
+          <button onclick="window.location.href='/performance?username={{ name }}&assignment_id={{ assignment._id }}'" style="background-color: #52ab98;">📊 Performance</button>
+        </div>
+      </div>
+      {% else %}
+      <div>No assignments available.</div>
+      {% endfor %}
+    </div>
+
+    <div class="todo">
+      <h4>To do:</h4>
+      <ul>
+        {% for item in todos %}
+        <li>
+          <label>
+            <input type="checkbox" onclick="this.parentElement.parentElement.classList.toggle('completed')">
+            <span>{{ item }}</span>
+          </label>
+          <form action="/delete-todo/{{ name }}/{{ loop.index0 }}" method="post">
+            <button type="submit" class="delete-btn">❌</button>
+          </form>
+        </li>
+        {% else %}
+        <li>No tasks yet!</li>
+        {% endfor %}
+      </ul>
+
+      <form action="/add-todo" method="post" style="margin-top:15px;">
+        <input type="hidden" name="username" value="{{ name }}">
+        <input type="text" name="task" placeholder="New task..." required>
+        <button type="submit">Add</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="videoModal">
+    <div>
+      <h2>Enable Camera </h2>
+      <h3>To begin the test, we need access to your webcam for emotion monitoring.</h3>
+      <h3>Wait for 15 seconds after granting camera access to allow the system to initialize the video stream correctly.</h3>
+      <h3>The test will start automatically once the setup is complete.</h3><br></br>
+      <h2>LOADING....</h2><br><br>
+      <button onclick="startVideo()" style="padding: 10px 20px; background: #0d47a1; color: white; border: none; border-radius: 5px; font-weight: bold;">Turn On Video</button>
+    </div>
+  </div>
+
+  <video id="videoFeed" autoplay muted></video>
+
+  <script>
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+    }
+
+    let currentAssignmentId = null;
+
+    function attemptAssignment(assignmentId) {
+      currentAssignmentId = assignmentId;
+      document.getElementById('videoModal').style.display = 'flex';
+    }
+
+    async function startVideo() {
+      document.getElementById('videoModal').style.display = 'none';
+      const video = document.getElementById('videoFeed');
+      video.style.display = 'none';
+
+      try {
+        const response = await fetch('/start_model', { method: 'POST' });
+        const data = await response.json();
+        if (data.status !== 'started') {
+          alert("Failed to start backend model: " + data.message);
+          return;
+        }
+        console.log("Emotion detection model started.");
+      } catch (error) {
+        alert("Error contacting backend to start model.");
+        console.error(error);
+        return;
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+
+        setInterval(() => {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob(sendFrameToBackend, 'image/jpeg');
+        }, 2000);
+
+        window.location.href = `/attempt-assignment/${currentAssignmentId}`;
+      } catch (err) {
+        alert('Camera access denied or not available.');
+        console.error(err);
+      }
+    }
+
+    function sendFrameToBackend(blob) {
+      // Optional backend image post logic here
+    }
+  </script>
+
+</body>
+</html>
+-->
+
+<!--
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Dashboard</title>
+  <style>
+    /* Your existing CSS here unchanged... */
+    /* (Omitting to keep answer concise, just keep your CSS) */
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+      transition: all 0.3s ease;
+    }
+
+    body {
+      background: linear-gradient(to bottom right, #e3f2fd, #ffffff);
+      overflow-x: hidden;
+      color: #333;
+    }
+
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .student-profile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+      background-image: url('{{ url_for('static', filename='emvi-logo.jpeg') }}');
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .student-info div {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      width: fit-content;
+      backdrop-filter: blur(4px);
+    }
+
+    .logout {
+      background: white;
+      border: none;
+      color: #0d47a1;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    .logout:hover {
+      background: #f1f1f1;
+      transform: scale(1.05);
+    }
+
+    .greeting {
+      padding: 20px 30px;
+      font-size: 20px;
+      color: #0d47a1;
+      background-color: #ffffffb4;
+    }
+
+    .tabs {
+      display: flex;
+      background: #ffffff;
+      padding-left: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab {
+      padding: 14px 24px;
+      cursor: pointer;
+      color: #333;
+      font-weight: 500;
+      position: relative;
+      margin-right: 12px;
+      border-radius: 10px 10px 0 0;
+    }
+
+    .tab::after {
+      content: '';
+      display: block;
+      height: 3px;
+      width: 0;
+      background: #0d47a1;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      transition: width 0.3s;
+    }
+
+    .tab:hover::after, .tab.active::after {
+      width: 100%;
+    }
+
+    .tab.active {
+      color: #0d47a1;
+      font-weight: bold;
+    }
+
+    a.tab {
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .main-content {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 24px;
+      gap: 20px;
+    }
+
+    .assignments {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .assignment-card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeIn 0.6s forwards;
+    }
+
+    .assignment-card:hover {
+      transform: scale(1.02);
+    }
+
+    .assignment-card button {
+      padding: 10px 20px;
+      background: #0d47a1;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    }
+
+    .assignment-card button:hover {
+      background: #1565c0;
+      transform: scale(1.05);
+    }
+
+    .todo {
+      flex: 1;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .todo h4 {
+      font-size: 20px;
+      color: #0d47a1;
+      margin-bottom: 10px;
+    }
+
+    .todo ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .todo li {
+      background: #f0f8ff;
+      margin: 8px 0;
+      padding: 10px 15px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .todo li.completed span {
+      text-decoration: line-through;
+      color: #888;
+    }
+
+    .todo input[type="checkbox"] {
+      margin-right: 10px;
+    }
+
+    .todo form {
+      display: inline;
+    }
+
+    .todo input[type="text"] {
+      padding: 8px;
+      width: 70%;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .todo button {
+      background-color: #52ab98;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+
+    .todo button:hover {
+      background-color: #3d8b80;
+    }
+
+    .todo .delete-btn {
+      background-color: #e74c3c;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .todo .delete-btn:hover {
+      background-color: #c0392b;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .dark-mode {
+      background-color: #121212;
+      color: #f0f0f0;
+    }
+
+    .dark-mode .topbar,
+    .dark-mode .tabs,
+    .dark-mode .assignment-card,
+    .dark-mode .todo {
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+    }
+
+    #videoModal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #videoModal > div {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    #videoFeed {
+      display: none;
+    }
+    
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="student-profile">
+      <div class="profile-pic"></div>
+      <div class="student-info">
+        <div>{{ name }}</div>
+        <div>Roll No: {{ rollno }}</div>
+      </div>
+    </div>
+    <div>
+      <button onclick="toggleDarkMode()" style="margin-right: 10px;">🌙</button>
+      <button class="logout" onclick="window.location.href='/logout'">Logout</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active">Dashboard</div>
+    <div class="tab">Assignments</div>
+    <div class="tab" onclick="window.location.href='/performance-overall?username={{ name }}'">Performance</div>
+    <div class="tab">More ▸</div>
+  </div>
+
+  <div class="main-content">
+    <div class="assignments">
+      {% for assignment in assignments %}
+      <div class="assignment-card">
+        <div>
+          <strong>{{ assignment.title }}</strong><br/>
+          <small>Click to start</small>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button onclick="attemptAssignment('{{ assignment._id }}')">Start ➤</button>
+          <button onclick="window.location.href='/performance?username={{ name }}&assignment_id={{ assignment._id }}'" style="background-color: #52ab98;">📊 Performance</button>
+        </div>
+      </div>
+      {% else %}
+      <div>No assignments available.</div>
+      {% endfor %}
+    </div>
+
+    <div class="todo">
+      <h4>To do:</h4>
+      <ul>
+        {% for item in todos %}
+        <li>
+          <label>
+            <input type="checkbox" onclick="this.parentElement.parentElement.classList.toggle('completed')">
+            <span>{{ item }}</span>
+          </label>
+          <form action="/delete-todo/{{ name }}/{{ loop.index0 }}" method="post">
+            <button type="submit" class="delete-btn">❌</button>
+          </form>
+        </li>
+        {% else %}
+        <li>No tasks yet!</li>
+        {% endfor %}
+      </ul>
+
+      <form action="/add-todo" method="post" style="margin-top:15px;">
+        <input type="hidden" name="username" value="{{ name }}">
+        <input type="text" name="task" placeholder="New task..." required>
+        <button type="submit">Add</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="videoModal">
+    <div>
+      <h2>Enable Camera </h2><br>
+
+      <h3>Please allow webcam access for emotion monitoring.<br>
+
+        Wait 15 seconds after granting permission to let the camera initialize.<br>
+
+        The test will start automatically.</h3><br></br>
+
+      <h2>LOADING....</h2><br><br>
+      <button onclick="startVideo()" style="padding: 10px 20px; background: #0d47a1; color: white; border: none; border-radius: 5px; font-weight: bold;">Turn On Video</button>
+    </div>
+  </div>
+
+  <video id="videoFeed" autoplay muted></video>
+
+  <script>
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+    }
+
+    let currentAssignmentId = null;
+
+    function attemptAssignment(assignmentId) {
+      currentAssignmentId = assignmentId;
+      document.getElementById('videoModal').style.display = 'flex';
+    }
+
+    async function startVideo() {
+      document.getElementById('videoModal').style.display = 'none';
+      const video = document.getElementById('videoFeed');
+      video.style.display = 'none';
+
+      if (!currentAssignmentId) {
+        alert('No assignment selected!');
+        return;
+      }
+
+      try {
+        // Send assignment_id in the POST request body
+        const response = await fetch('/start_model', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ assignment_id: currentAssignmentId })
+        });
+        const data = await response.json();
+        if (data.status !== 'started') {
+          alert("Failed to start backend model: " + data.message);
+          return;
+        }
+        console.log("Emotion detection model started.");
+      } catch (error) {
+        alert("Error contacting backend to start model.");
+        console.error(error);
+        return;
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+
+        setInterval(() => {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob(sendFrameToBackend, 'image/jpeg');
+        }, 2000);
+
+        // Redirect to assignment attempt page AFTER starting video and model
+        window.location.href = `/attempt-assignment/${currentAssignmentId}`;
+      } catch (err) {
+        alert('Camera access denied or not available.');
+        console.error(err);
+      }
+    }
+
+    function sendFrameToBackend(blob) {
+      // Optional backend image post logic here
+    }
+  </script>
+
+</body>
+</html>
+-->
+<!--
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Dashboard</title>
+  <style>
+    /* Your existing CSS here unchanged... */
+    /* (Omitting to keep answer concise, just keep your CSS) */
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+      transition: all 0.3s ease;
+    }
+
+    body {
+      background: linear-gradient(to bottom right, #e3f2fd, #ffffff);
+      overflow-x: hidden;
+      color: #333;
+    }
+
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .student-profile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+      background-image: url('{{ url_for('static', filename='emvi-logo.jpeg') }}');
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .student-info div {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      width: fit-content;
+      backdrop-filter: blur(4px);
+    }
+
+    .logout {
+      background: white;
+      border: none;
+      color: #0d47a1;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    .logout:hover {
+      background: #f1f1f1;
+      transform: scale(1.05);
+    }
+
+    .greeting {
+      padding: 20px 30px;
+      font-size: 20px;
+      color: #0d47a1;
+      background-color: #ffffffb4;
+    }
+
+    .tabs {
+      display: flex;
+      background: #ffffff;
+      padding-left: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab {
+      padding: 14px 24px;
+      cursor: pointer;
+      color: #333;
+      font-weight: 500;
+      position: relative;
+      margin-right: 12px;
+      border-radius: 10px 10px 0 0;
+    }
+
+    .tab::after {
+      content: '';
+      display: block;
+      height: 3px;
+      width: 0;
+      background: #0d47a1;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      transition: width 0.3s;
+    }
+
+    .tab:hover::after, .tab.active::after {
+      width: 100%;
+    }
+
+    .tab.active {
+      color: #0d47a1;
+      font-weight: bold;
+    }
+
+    a.tab {
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .main-content {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 24px;
+      gap: 20px;
+    }
+
+    .assignments {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .assignment-card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeIn 0.6s forwards;
+    }
+
+    .assignment-card:hover {
+      transform: scale(1.02);
+    }
+
+    .assignment-card button {
+      padding: 10px 20px;
+      background: #0d47a1;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    }
+
+    .assignment-card button:hover {
+      background: #1565c0;
+      transform: scale(1.05);
+    }
+
+    .todo {
+      flex: 1;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .todo h4 {
+      font-size: 20px;
+      color: #0d47a1;
+      margin-bottom: 10px;
+    }
+
+    .todo ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .todo li {
+      background: #f0f8ff;
+      margin: 8px 0;
+      padding: 10px 15px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .todo li.completed span {
+      text-decoration: line-through;
+      color: #888;
+    }
+
+    .todo input[type="checkbox"] {
+      margin-right: 10px;
+    }
+
+    .todo form {
+      display: inline;
+    }
+
+    .todo input[type="text"] {
+      padding: 8px;
+      width: 70%;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .todo button {
+      background-color: #52ab98;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+
+    .todo button:hover {
+      background-color: #3d8b80;
+    }
+
+    .todo .delete-btn {
+      background-color: #e74c3c;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .todo .delete-btn:hover {
+      background-color: #c0392b;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .dark-mode {
+      background-color: #121212;
+      color: #f0f0f0;
+    }
+
+    .dark-mode .topbar,
+    .dark-mode .tabs,
+    .dark-mode .assignment-card,
+    .dark-mode .todo {
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+    }
+
+    #videoModal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #videoModal > div {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    #videoFeed {
+      display: none;
+    }
+    
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="student-profile">
+      <div class="profile-pic"></div>
+      <div class="student-info">
+        <div>{{ name }}</div>
+        <div>Roll No: {{ rollno }}</div>
+      </div>
+    </div>
+    <div>
+      <button onclick="toggleDarkMode()" style="margin-right: 10px;">🌙</button>
+      <button class="logout" onclick="window.location.href='/logout'">Logout</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active">Dashboard</div>
+    <div class="tab">Assignments</div>
+   
+    <div class="tab">More ▸</div>
+  </div>
+
+  <div class="main-content">
+    <div class="assignments">
+      {% for assignment in assignments %}
+      <div class="assignment-card">
+        <div>
+          <strong>{{ assignment.title }}</strong><br/>
+          <small>Click to start</small>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button onclick="attemptAssignment('{{ assignment._id }}')">Start ➤</button>
+          <button onclick="window.location.href='/performance?username={{ name }}&assignment_id={{ assignment._id }}'" style="background-color: #52ab98;">📊 Performance</button>
+
+        </div>
+      </div>
+      {% else %}
+      <div>No assignments available.</div>
+      {% endfor %}
+    </div>
+
+    <div class="todo">
+      <h4>To do:</h4>
+      <ul>
+        {% for item in todos %}
+        <li>
+          <label>
+            <input type="checkbox" onclick="this.parentElement.parentElement.classList.toggle('completed')">
+            <span>{{ item }}</span>
+          </label>
+          <form action="/delete-todo/{{ name }}/{{ loop.index0 }}" method="post">
+            <button type="submit" class="delete-btn">❌</button>
+          </form>
+        </li>
+        {% else %}
+        <li>No tasks yet!</li>
+        {% endfor %}
+      </ul>
+
+      <form action="/add-todo" method="post" style="margin-top:15px;">
+        <input type="hidden" name="username" value="{{ name }}">
+        <input type="text" name="task" placeholder="New task..." required>
+        <button type="submit">Add</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="videoModal">
+    <div>
+      <h2>Enable Camera </h2><br>
+
+      <h3>Please allow webcam access for emotion monitoring.<br>
+
+        Wait 15 seconds after granting permission to let the camera initialize.<br>
+
+        The test will start automatically.</h3><br></br>
+
+      <h2>LOADING....</h2><br><br>
+      <button onclick="startVideo()" style="padding: 10px 20px; background: #0d47a1; color: white; border: none; border-radius: 5px; font-weight: bold;">Turn On Video</button>
+    </div>
+  </div>
+
+  <video id="videoFeed" autoplay muted></video>
+
+  <script>
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+    }
+
+    let currentAssignmentId = null;
+
+    function attemptAssignment(assignmentId) {
+      currentAssignmentId = assignmentId;
+      document.getElementById('videoModal').style.display = 'flex';
+    }
+
+    async function startVideo() {
+      document.getElementById('videoModal').style.display = 'none';
+      const video = document.getElementById('videoFeed');
+      video.style.display = 'none';
+
+      if (!currentAssignmentId) {
+        alert('No assignment selected!');
+        return;
+      }
+
+      try {
+        // Send assignment_id in the POST request body
+        const response = await fetch('/start_model', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ assignment_id: currentAssignmentId })
+        });
+        const data = await response.json();
+        if (data.status !== 'started') {
+          alert("Failed to start backend model: " + data.message);
+          return;
+        }
+        console.log("Emotion detection model started.");
+      } catch (error) {
+        alert("Error contacting backend to start model.");
+        console.error(error);
+        return;
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+
+        setInterval(() => {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob(sendFrameToBackend, 'image/jpeg');
+        }, 2000);
+
+        // Redirect to assignment attempt page AFTER starting video and model
+        window.location.href = /attempt-assignment/${currentAssignmentId};
+      } catch (err) {
+        alert('Camera access denied or not available.');
+        console.error(err);
+      }
+    }
+
+    function sendFrameToBackend(blob) {
+      // Optional backend image post logic here
+    }
+  </script>
+
+</body>
+</html>
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Dashboard</title>
+  <style>
+    /* Your existing CSS here unchanged... */
+    /* (Omitting to keep answer concise, just keep your CSS) */
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+      transition: all 0.3s ease;
+    }
+
+    body {
+      background: linear-gradient(to bottom right, #e3f2fd, #ffffff);
+      overflow-x: hidden;
+      color: #333;
+    }
+
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .student-profile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+      background-image: url('{{ url_for('static', filename='emvi-logo.jpeg') }}');
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .student-info div {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      width: fit-content;
+      backdrop-filter: blur(4px);
+    }
+
+    .logout {
+      background: white;
+      border: none;
+      color: #0d47a1;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    .logout:hover {
+      background: #f1f1f1;
+      transform: scale(1.05);
+    }
+
+    .greeting {
+      padding: 20px 30px;
+      font-size: 20px;
+      color: #0d47a1;
+      background-color: #ffffffb4;
+    }
+
+    .tabs {
+      display: flex;
+      background: #ffffff;
+      padding-left: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab {
+      padding: 14px 24px;
+      cursor: pointer;
+      color: #333;
+      font-weight: 500;
+      position: relative;
+      margin-right: 12px;
+      border-radius: 10px 10px 0 0;
+    }
+
+    .tab::after {
+      content: '';
+      display: block;
+      height: 3px;
+      width: 0;
+      background: #0d47a1;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      transition: width 0.3s;
+    }
+
+    .tab:hover::after, .tab.active::after {
+      width: 100%;
+    }
+
+    .tab.active {
+      color: #0d47a1;
+      font-weight: bold;
+    }
+
+    a.tab {
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .main-content {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 24px;
+      gap: 20px;
+    }
+
+    .assignments {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .assignment-card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeIn 0.6s forwards;
+    }
+
+    .assignment-card:hover {
+      transform: scale(1.02);
+    }
+
+    .assignment-card button {
+      padding: 10px 20px;
+      background: #0d47a1;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    }
+
+    .assignment-card button:hover {
+      background: #1565c0;
+      transform: scale(1.05);
+    }
+
+    .todo {
+      flex: 1;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .todo h4 {
+      font-size: 20px;
+      color: #0d47a1;
+      margin-bottom: 10px;
+    }
+
+    .todo ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .todo li {
+      background: #f0f8ff;
+      margin: 8px 0;
+      padding: 10px 15px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .todo li.completed span {
+      text-decoration: line-through;
+      color: #888;
+    }
+
+    .todo input[type="checkbox"] {
+      margin-right: 10px;
+    }
+
+    .todo form {
+      display: inline;
+    }
+
+    .todo input[type="text"] {
+      padding: 8px;
+      width: 70%;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .todo button {
+      background-color: #52ab98;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+
+    .todo button:hover {
+      background-color: #3d8b80;
+    }
+
+    .todo .delete-btn {
+      background-color: #e74c3c;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .todo .delete-btn:hover {
+      background-color: #c0392b;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .dark-mode {
+      background-color: #121212;
+      color: #f0f0f0;
+    }
+
+    .dark-mode .topbar,
+    .dark-mode .tabs,
+    .dark-mode .assignment-card,
+    .dark-mode .todo {
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+    }
+
+    #videoModal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #videoModal > div {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    #videoFeed {
+      display: none;
+    }
+    
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="student-profile">
+      <div class="profile-pic"></div>
+      <div class="student-info">
+        <div>{{ name }}</div>
+        <div>Roll No: {{ rollno }}</div>
+      </div>
+    </div>
+    <div>
+      <button onclick="toggleDarkMode()" style="margin-right: 10px;">🌙</button>
+      <button class="logout" onclick="window.location.href='/logout'">Logout</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active">Dashboard</div>
+    <div class="tab">Assignments</div>
+    <div class="tab">More ▸</div>
+  </div>
+
+  <div class="main-content">
+    <div class="assignments">
+      {% for assignment in assignments %}
+      <div class="assignment-card">
+        <div>
+          <strong>{{ assignment.title }}</strong><br/>
+          <small>Click to start</small>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button onclick="attemptAssignment('{{ assignment._id }}')">Start ➤</button>
+          <button onclick="window.location.href='/performance?username={{ name }}&assignment_id={{ assignment._id }}'" style="background-color: #52ab98;">📊 Performance</button>
+        </div>
+      </div>
+      {% else %}
+      <div>No assignments available.</div>
+      {% endfor %}
+    </div>
+
+    <div class="todo">
+      <h4>To do:</h4>
+      <ul>
+        {% for item in todos %}
+        <li>
+          <label>
+            <input type="checkbox" onclick="this.parentElement.parentElement.classList.toggle('completed')">
+            <span>{{ item }}</span>
+          </label>
+          <form action="/delete-todo/{{ name }}/{{ loop.index0 }}" method="post">
+            <button type="submit" class="delete-btn">❌</button>
+          </form>
+        </li>
+        {% else %}
+        <li>No tasks yet!</li>
+        {% endfor %}
+      </ul>
+
+      <form action="/add-todo" method="post" style="margin-top:15px;">
+        <input type="hidden" name="username" value="{{ name }}">
+        <input type="text" name="task" placeholder="New task..." required>
+        <button type="submit">Add</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="videoModal">
+    <div>
+      <h2>Enable Camera </h2><br>
+
+      <h3>Please allow webcam access for emotion monitoring.<br>
+
+        Wait 15 seconds after granting permission to let the camera initialize.<br>
+
+        The test will start automatically.</h3><br></br>
+
+      <h2>LOADING....</h2><br><br>
+      <button onclick="startVideo()" style="padding: 10px 20px; background: #0d47a1; color: white; border: none; border-radius: 5px; font-weight: bold;">Turn On Video</button>
+    </div>
+  </div>
+
+  <video id="videoFeed" autoplay muted></video>
+<script>
+  // Tab switching
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+
+  // Dark mode toggle
+  function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+  }
+
+  // Global assignment ID holder
+  let currentAssignmentId = null;
+
+  // Called when 'Start' is clicked — opens webcam modal
+  function attemptAssignment(assignmentId) {
+    currentAssignmentId = assignmentId;
+    document.getElementById('videoModal').style.display = 'flex';
+  }
+
+  // Called when 'Allow & Start' is clicked in modal
+  async function startVideo() {
+    document.getElementById('videoModal').style.display = 'none';
+    const video = document.getElementById('videoFeed');
+    video.style.display = 'none';
+
+    if (!currentAssignmentId) {
+      alert('No assignment selected!');
+      return;
+    }
+
+    // Notify backend to start the model
+    try {
+      const response = await fetch('/start_model', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignment_id: currentAssignmentId })
+      });
+      const data = await response.json();
+      if (data.status !== 'started') {
+        alert("Failed to start backend model: " + data.message);
+        return;
+      }
+      console.log("Emotion detection model started.");
+    } catch (error) {
+      alert("Error contacting backend to start model.");
+      console.error(error);
+      return;
+    }
+
+    // Start webcam and stream frames every 2 seconds
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = stream;
+      video.play();
+
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+
+      setInterval(() => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(blob => {
+          if (blob) {
+            const formData = new FormData();
+            formData.append('frame', blob);
+            formData.append('assignment_id', currentAssignmentId);
+
+            fetch('/process_frame', {
+              method: 'POST',
+              body: formData
+            }).catch(err => console.error('Frame send failed:', err));
+          }
+        }, 'image/jpeg');
+      }, 2000);
+
+      // Redirect after 15 seconds to start the actual assignment
+      setTimeout(() => {
+        window.location.href = `/attempt-assignment/${currentAssignmentId}`;
+      }, 1000);
+
+    } catch (error) {
+      alert('Could not access camera. Please allow permission.');
+      console.error(error);
+    }
+  }
+</script>
+
+</body> 
+</html>

@@ -1,0 +1,1616 @@
+from collections import Counter
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, abort
+from werkzeug.security import generate_password_hash, check_password_hash
+from pymongo import MongoClient
+from bson import ObjectId
+import subprocess
+import sys
+import functools
+import os
+
+app = Flask(__name__)
+app.secret_key = 'super_secret_key'  # Change this in production!
+
+# MongoDB setup
+client = MongoClient('mongodb://localhost:27017/')
+db = client['emvi_portal']
+
+assignments_collection = db['assignments']
+answers_collection = db['student_answers']
+emotion_collection = db['emotion_logs']
+students_collection = db['students']
+teachers_collection = db['teachers']
+admins_collection = db['admins']
+
+# In-memory todo list for students
+student_todos = {}
+
+# === Authentication and Utility ===
+def login_required(role=None):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            if 'username' not in session or 'role' not in session:
+                return redirect(url_for('home'))
+            if role and session['role'] != role:
+                return redirect(url_for('home'))
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+def get_user_collection(role):
+    return {
+        'student': students_collection,
+        'teacher': teachers_collection,
+        'admin': admins_collection
+    }.get(role)
+
+# === Routes ===
+@app.route('/')
+def home():
+    if 'username' in session and 'role' in session:
+        role = session['role']
+        username = session['username']
+        if role == 'student':
+            return redirect(url_for('student_dashboard', username=username))
+        elif role == 'teacher':
+            return redirect(url_for('teacher_dashboard', username=username))
+        elif role == 'admin':
+            return redirect(url_for('admin_dashboard', username=username))
+    return render_template('login.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        role = request.form.get('role', '').lower()
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()
+        rollno = request.form.get('rollno', '').strip() if role == 'student' else None
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+
+        if role not in ['student', 'teacher', 'admin']:
+            return "Invalid role. <a href='/register'>Try again</a>"
+        if not username or not email or not password or not confirm_password:
+            return "All fields are required. <a href='/register'>Try again</a>"
+        if password != confirm_password:
+            return "Passwords do not match. <a href='/register'>Try again</a>"
+
+        collection = get_user_collection(role)
+        if collection.find_one({'username': username}):
+            return "Username already exists. <a href='/register'>Try again</a>"
+        if collection.find_one({'email': email}):
+            return "Email already registered. <a href='/register'>Try again</a>"
+        if role == 'student':
+            if not rollno:
+                return "Roll number is required for students. <a href='/register'>Try again</a>"
+            if collection.find_one({'rollno': rollno}):
+                return "Roll number already registered. <a href='/register'>Try again</a>"
+
+        user_data = {
+            'username': username,
+            'email': email,
+            'password_hash': generate_password_hash(password),
+        }
+        if role == 'student':
+            user_data['rollno'] = rollno
+
+        collection.insert_one(user_data)
+        return redirect(url_for('home'))
+
+    return render_template('register.html')
+
+@app.route('/admin-login')
+def admin_login():
+    return render_template('admin_login.html')
+
+@app.route('/login', methods=['POST'])
+def login():
+    role = request.form.get('role', '').lower()
+    username = request.form.get('username', '').strip()
+    password = request.form.get('password', '')
+
+    collection = get_user_collection(role)
+    user = collection.find_one({'username': username})
+    if user and check_password_hash(user['password_hash'], password):
+        session['username'] = username
+        session['role'] = role 
+        if role == 'student':
+            student_todos.setdefault(username, [])
+            return redirect(url_for('student_dashboard', username=username))
+        elif role == 'teacher':
+            return redirect(url_for('teacher_dashboard', username=username))
+        elif role == 'admin':
+            return redirect(url_for('admin_dashboard', username=username))
+
+    msg = "Invalid admin credentials." if role == 'admin' else "Invalid credentials."
+    login_url = '/admin-login' if role == 'admin' else '/'
+    return f"{msg} <a href='{login_url}'>Try again</a>"
+
+@app.route('/admin_dashboard/<username>')
+@login_required(role='admin')
+def admin_dashboard(username):
+    grouped_users = {
+        'student': list(students_collection.find()),
+        'teacher': list(teachers_collection.find()),
+        'admin': list(admins_collection.find())
+    }
+
+    assignments = list(assignments_collection.find())
+    results = []
+    for r in answers_collection.find():
+        assignment = assignments_collection.find_one({'_id': ObjectId(r['assignment_id'])})
+        results.append({
+            'student': r['student'],
+            'score': r['score'],
+            'assignment_title': assignment['title'] if assignment else 'Unknown'
+        })
+
+    return render_template('admin_dashboard.html', name=username, users=grouped_users, assignments=assignments, results=results)
+
+@app.route('/delete-assignment/<assignment_id>', methods=['POST'])
+@login_required(role='admin')
+def delete_assignment(assignment_id):
+    assignments_collection.delete_one({'_id': ObjectId(assignment_id)})
+    answers_collection.delete_many({'assignment_id': assignment_id})
+    return redirect(url_for('admin_dashboard', username=session['username']))
+
+@app.route('/delete-user/<role>/<username>', methods=['POST'])
+@login_required(role='admin')
+def delete_user(role, username):
+    if role == 'admin' and username == session.get('username'):
+        return "Admin cannot delete themselves."
+    collection = get_user_collection(role)
+    collection.delete_one({'username': username})
+    return redirect(url_for('admin_dashboard', username=session['username']))
+
+@app.route('/teacher_dashboard/<username>')
+@login_required(role='teacher')
+def teacher_dashboard(username):
+    assignments = list(assignments_collection.find({'created_by': username}))
+    results = []
+    for assignment in assignments:
+        submissions = list(answers_collection.find({'assignment_id': str(assignment['_id'])}))
+        results.append({'assignment': assignment, 'submissions': submissions})
+    return render_template('teacher_dashboard.html', name=username, results=results)
+
+@app.route('/create-assignment', methods=['POST'])
+@login_required(role='teacher')
+def create_assignment():
+    assignment = {
+        'title': request.form.get('title', '').strip(),
+        'created_by': session['username'],
+        'questions': []
+    }
+    for i in range(1, 11):
+        question_text = request.form.get(f'q{i}')
+        if question_text:
+            question = {
+                'question': question_text.strip(),
+                'options': {
+                    'A': request.form.get(f'q{i}_a'),
+                    'B': request.form.get(f'q{i}_b'),
+                    'C': request.form.get(f'q{i}_c'),
+                    'D': request.form.get(f'q{i}_d')
+                },
+                'answer': request.form.get(f'q{i}_answer')
+            }
+            assignment['questions'].append(question)
+    assignments_collection.insert_one(assignment)
+    return redirect(url_for('teacher_dashboard', username=session['username']))
+
+@app.route('/dashboard/student/<username>')
+@login_required(role='student')
+def student_dashboard(username):
+    assignments = list(assignments_collection.find())
+    for a in assignments:
+        a['_id'] = str(a['_id'])
+    todos = student_todos.get(username, [])
+    return render_template('student_dashboard.html', name=username, assignments=assignments, todos=todos)
+
+@app.route('/attempt-assignment/<assignment_id>', methods=['GET', 'POST'])
+@login_required(role='student')
+def attempt_assignment(assignment_id):
+    assignment = assignments_collection.find_one({'_id': ObjectId(assignment_id)})
+    if not assignment:
+        abort(404, description="Assignment not found.")
+    if request.method == 'POST':
+        answers = {}
+        score = 0
+        for i, question in enumerate(assignment['questions']):
+            ans = request.form.get(f'answer_{i}')
+            correct = question.get('answer')
+            answers[str(i)] = ans
+            if ans and correct and ans.strip().upper() == correct.strip().upper():
+                score += 1
+        answers_collection.insert_one({
+            'student': session['username'],
+            'assignment_id': assignment_id,
+            'answers': answers,
+            'score': score
+        })
+        return redirect(url_for('student_results', username=session['username']))
+    assignment['_id'] = str(assignment['_id'])
+    return render_template('attempt_assignment.html', assignment=assignment)
+
+@app.route('/student-results/<username>')
+@login_required(role='student')
+def student_results(username):
+    submissions = list(answers_collection.find({'student': username}))
+    for s in submissions:
+        assignment = assignments_collection.find_one({'_id': ObjectId(s['assignment_id'])})
+        s['assignment'] = assignment['title'] if assignment else 'Assignment Deleted'
+    return render_template('student_results.html', submissions=submissions)
+
+@app.route('/add-todo', methods=['POST'])
+@login_required(role='student')
+def add_todo():
+    username = request.form.get('username')
+    task = request.form.get('task', '').strip()
+    if task:
+        student_todos.setdefault(username, []).append(task)
+    return redirect(url_for('student_dashboard', username=username))
+
+@app.route('/delete-todo/<username>/<int:index>', methods=['POST'])
+@login_required(role='student')
+def delete_todo(username, index):
+    if username in student_todos and 0 <= index < len(student_todos[username]):
+        del student_todos[username][index]
+    return redirect(url_for('student_dashboard', username=username))
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('home'))
+
+@app.route('/start_model', methods=['POST'])
+@login_required()
+def start_model():
+    username = session.get('username')
+    data = request.get_json(silent=True)
+    assignment_id = data.get('assignment_id') if data else request.form.get('assignment_id')
+
+    if not username:
+        return jsonify({"status": "error", "message": "Missing username in session."}), 401
+    if not assignment_id:
+        return jsonify({"status": "error", "message": "Missing assignment_id."}), 400
+
+    model_script_path = os.path.abspath("../backend/realtimedetection.py")
+
+    try:
+        subprocess.Popen([
+            sys.executable,
+            model_script_path,
+            username,
+            assignment_id,
+            '300'
+        ])
+        return jsonify({"status": "started"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/emotion-logs')
+@login_required(role='admin')
+def emotion_logs():
+    logs = list(emotion_collection.find())
+    return render_template('emotion_logs.html', logs=logs)
+
+@app.route('/get-emotions/<username>')
+@login_required(role='student')
+def get_emotions(username):
+    if session.get('username') != username:
+        abort(403)
+    logs = list(emotion_collection.find({'username': username}))
+    emotion_counts = Counter([log.get('emotion') for log in logs if log.get('emotion')])
+    return jsonify(emotion_counts)
+
+@app.route('/performance')
+@login_required(role='student')
+def performance():
+    username = request.args.get('username')
+    assignment_id = request.args.get('assignment_id')
+
+    if not username or not assignment_id:
+        return "Missing username or assignment ID", 400
+
+    if session.get('username') != username:
+        abort(403)
+
+    submission = answers_collection.find_one({'student': username, 'assignment_id': assignment_id})
+    assignment = assignments_collection.find_one({'_id': ObjectId(assignment_id)})
+
+    performance_data = {
+        'score': submission['score'] if submission else None,
+        'answers': submission['answers'] if submission else {},
+        'total_questions': len(assignment['questions']) if assignment else 0,
+        'assignment_title': assignment['title'] if assignment else 'Unknown'
+    }
+
+    return render_template('performance.html',
+                           username=username,
+                           assignment_id=assignment_id,
+                           performance=performance_data)
+
+# === App Entry Point ===
+if __name__ == '__main__':
+    app.run(debug=True)
+    
+    
+    
+    admin d
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f5f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .box {
+      background: white;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    h1 {
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>{{ greeting }}</h1>
+    <p>Welcome to the Real-Time Emotion Detection System!</p>
+  </div>
+</body>
+</html>
+
+
+attempt_assi
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Attempt Assignment</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f2f5;
+      padding: 20px;
+    }
+    h2 {
+      color: #0d47a1;
+      margin-bottom: 20px;
+    }
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .student-profile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+      background-image: url('{{ url_for('static', filename='profile-pic.jpg') }}');
+      background-size: cover;
+      background-position: center;
+    }
+    .student-info div {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      max-width: 800px;
+      margin: 20px auto;
+    }
+    .question {
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .question p {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .option {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .option input[type="radio"] {
+      margin-right: 10px;
+    }
+    button {
+      background: #0d47a1;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: bold;
+      display: block;
+      margin: 20px auto 0;
+    }
+    button:hover {
+      background: #1565c0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="student-profile">
+    <div class="profile-pic"></div>
+    <div class="student-info">
+      <div>{{ session['username'] }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Assignment Details -->
+<div class="assignment-details">
+  <h2>{{ assignment.title }}</h2>
+
+  <form method="POST">
+    {% for question in assignment.questions %}
+      <div class="question">
+        <p>Q{{ loop.index }}. {{ question.question }}</p>
+        <div class="option">
+          <input type="radio" id="answer_{{ loop.index }}_A" name="answer_{{ loop.index }}" value="A" required>
+          <label for="answer_{{ loop.index }}_A">{{ question.options.A }}</label>
+        </div>
+        <div class="option">
+          <input type="radio" id="answer_{{ loop.index }}_B" name="answer_{{ loop.index }}" value="B" required>
+          <label for="answer_{{ loop.index }}_B">{{ question.options.B }}</label>
+        </div>
+        <div class="option">
+          <input type="radio" id="answer_{{ loop.index }}_C" name="answer_{{ loop.index }}" value="C" required>
+          <label for="answer_{{ loop.index }}_C">{{ question.options.C }}</label>
+        </div>
+        <div class="option">
+          <input type="radio" id="answer_{{ loop.index }}_D" name="answer_{{ loop.index }}" value="D" required>
+          <label for="answer_{{ loop.index }}_D">{{ question.options.D }}</label>
+        </div>
+      </div>
+    {% endfor %}
+
+    <button type="submit">Submit Assignment</button>
+  </form>
+</div>
+
+</body>
+</html> 
+
+login.html 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login | EmVi</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-box {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 350px;
+    }
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    input[type="submit"],
+    .admin-btn {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .role-select {
+      margin-top: 10px;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <img src="your-logo.png" alt="Logo" style="width: 80px;">
+    <h2>Login</h2>
+    <form action="/login" method="POST">
+      <input type="text" name="username" placeholder="Username" required />
+      <input type="password" name="password" placeholder="Password" required />
+
+      <div class="role-select">
+        <input type="radio" id="student" name="role" value="student" checked>
+        <label for="student">Student</label>
+        <input type="radio" id="teacher" name="role" value="teacher">
+        <label for="teacher">Teacher</label>
+      </div>
+
+      <input type="submit" value="Login" />
+    </form>
+
+    <!-- Admin login redirects to a different page -->
+    <a href="/admin-login">
+      <button class="admin-btn" type="button">Login as Admin</button>
+    </a>
+  </div>
+</body>
+</html>
+
+register.html 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register | Emotion Detection System</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, rgb(252, 250, 255), rgb(188, 196, 210));
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .register-box {
+      background: #fff;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      width: 350px;
+      text-align: center;
+    }
+
+    .register-box h2 {
+      margin-bottom: 25px;
+      color: #333;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    .role-select {
+      text-align: left;
+      margin: 15px 0;
+    }
+
+    .role-select label {
+      font-size: 14px;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input[type="submit"] {
+      width: 100%;
+      padding: 12px;
+      background-color: rgb(29, 103, 201);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    input[type="submit"]:hover {
+      background-color: white;
+      color: rgb(29, 103, 201);
+      border: 1px solid rgb(29, 103, 201);
+    }
+
+    .login-link {
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    .login-link a {
+      color: rgb(29, 103, 201);
+      text-decoration: none;
+    }
+
+    .login-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="register-box">
+    <h2>Create Account</h2>
+    <form action="/register" method="POST">
+      <input type="text" name="username" placeholder="Username" required>
+      <input type="password" name="password" placeholder="Password" required>
+
+      <div class="role-select">
+        <p><strong>Select Role:</strong></p>
+        <label><input type="radio" name="role" value="student" checked> Student</label>
+        <label><input type="radio" name="role" value="teacher"> Teacher</label>
+        <label><input type="radio" name="role" value="admin"> Admin</label>
+      </div>
+
+      <input type="submit" value="Register">
+    </form>
+
+    <div class="login-link">
+      Already registered? <a href="/login">Login here</a>
+    </div>
+  </div>
+</body>
+</html>
+
+
+result.html 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Result</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 50px;
+      background-color: #e8f0fe;
+    }
+    .box {
+      background-color: white;
+      padding: 30px;
+      border-radius: 10px;
+      display: inline-block;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #0d47a1;
+    }
+    p {
+      font-size: 20px;
+    }
+    a {
+      margin-top: 20px;
+      display: inline-block;
+      text-decoration: none;
+      background: #0d47a1;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+    }
+    a:hover {
+      background: #1565c0;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Test Submitted!</h1>
+    <p>You scored <strong>{{ score }}</strong> out of <strong>{{ total }}</strong></p>
+    <a href="/dashboard/student/{{ session['username'] }}">Back to Dashboard</a>
+  </div>
+</body>
+</html>
+
+student d 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background-color: #f0f2f5;
+    }
+
+    /* Topbar */
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .student-profile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+      background-image: url('{{ url_for('static', filename='emvi-logo.jpeg') }}');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .student-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .student-info div {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      width: fit-content;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .logout {
+      background: white;
+      border: none;
+      color: #0d47a1;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .logout:hover {
+      background: #f1f1f1;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab {
+      padding: 14px 24px;
+      cursor: pointer;
+      color: #333;
+      font-weight: 500;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .tab:hover {
+      background: #f0f0f0;
+    }
+
+    .tab.active {
+      background: #0d47a1;
+      color: white;
+    }
+
+    /* Content Layout */
+    .main-content {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .assignments {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .assignment-card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.07);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .assignment-card button {
+      padding: 10px 20px;
+      background: #0d47a1;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: background 0.3s ease;
+    }
+
+    .assignment-card button:hover {
+      background: #1565c0;
+    }
+
+    /* To-Do List Styling */
+    .todo {
+      flex: 1;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      height: fit-content;
+    }
+
+    .todo h4 {
+      font-size: 18px;
+      color: #0d47a1;
+      margin-bottom: 10px;
+    }
+
+    .todo ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .todo li {
+      background: #f0f8ff;
+      margin: 8px 0;
+      padding: 10px 15px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .todo form {
+      display: inline;
+    }
+
+    .todo input[type="text"] {
+      padding: 8px;
+      width: 70%;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .todo button {
+      background-color: #52ab98;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+
+    .todo button:hover {
+      background-color: #3d8b80;
+    }
+
+    .todo .delete-btn {
+      background-color: #e74c3c;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .todo .delete-btn:hover {
+      background-color: #c0392b;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Topbar -->
+  <div class="topbar">
+    <div class="student-profile">
+      <div class="profile-pic"></div>
+      <div class="student-info">
+        <div>{{ name }}</div>
+        <div>Roll No: CS123</div>
+      </div>
+    </div>
+    <button class="logout" onclick="window.location.href='/logout'">Logout</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active">Dashboard</div>
+    <div class="tab">Assignments</div>
+    <div class="tab">Performance</div>
+    <div class="tab">More ▸</div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Assignments -->
+    <div class="assignments">
+      {% for assignment in assignments %}
+      <div class="assignment-card">
+        <div>{{ assignment.title }}</div>
+        <button onclick="attemptAssignment('{{ assignment._id }}')">Attempt</button>
+      </div>
+      {% else %}
+      <div>No assignments available.</div>
+      {% endfor %}
+    </div>
+
+    <!-- To-Do List -->
+    <div class="todo">
+      <h4>To do:</h4>
+      <ul>
+        {% for item in todos %}
+          <li>
+            {{ item }}
+            <form action="/delete-todo/{{ name }}/{{ loop.index0 }}" method="post">
+              <button type="submit" class="delete-btn">❌</button>
+            </form>
+          </li>
+        {% else %}
+          <li>No tasks yet!</li>
+        {% endfor %}
+      </ul>
+
+      <form action="/add-todo" method="post" style="margin-top:15px;">
+        <input type="hidden" name="username" value="{{ name }}">
+        <input type="text" name="task" placeholder="New task..." required>
+        <button type="submit">Add</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    // Tabs interaction
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    // Attempt Assignment
+    function attemptAssignment(assignmentId) {
+      window.location.href = `/attempt-assignment/${assignmentId}`;
+    }
+  </script>
+
+</body>
+</html>
+
+st res 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h2>Welcome, {{ session['username'] }} — Your Results</h2>
+    <a href="{{ url_for('student_dashboard', username=session['username']) }}">← Back to Dashboard</a>
+    <hr>
+    {% if submissions %}
+        <table border="1" cellpadding="10">
+            <thead>
+                <tr>
+                    <th>Assignment</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for submission in submissions %}
+                    <tr>
+                        <td>{{ submission.assignment }}</td>
+                        <td>{{ submission.score }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No submissions yet.</p>
+    {% endif %}
+</body>
+</html>
+
+teach das 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teacher Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background-color: #f0f2f5;
+    }
+
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .teacher-profile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+      background-image: url('{{ url_for('static', filename='emvi-logo.jpeg') }}');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .teacher-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .teacher-info div {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      width: fit-content;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .logout {
+      background: white;
+      border: none;
+      color: #0d47a1;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .logout:hover {
+      background: #f1f1f1;
+    }
+
+    .tabs {
+      display: flex;
+      background: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab {
+      padding: 14px 24px;
+      cursor: pointer;
+      color: #333;
+      font-weight: 500;
+      transition: background 0.2s ease;
+    }
+
+    .tab:hover {
+      background: #f0f0f0;
+    }
+
+    .tab.active {
+      background: #0d47a1;
+      color: white;
+    }
+
+    .main-content {
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .upload-section, .submissions-section {
+      background: white;
+      flex: 1;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.07);
+    }
+
+    .upload-section h3, .submissions-section h3 {
+      margin-bottom: 10px;
+      color: #0d47a1;
+    }
+
+    .submissions-list {
+      margin-top: 10px;
+    }
+
+    .submissions-list div {
+      background: #f6f8fa;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border-left: 4px solid #0d47a1;
+    }
+
+    fieldset {
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      padding: 10px;
+    }
+
+    textarea, input[type="text"], select {
+      width: 100%;
+      padding: 8px;
+      margin: 4px 0;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #0d47a1;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #1565c0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="teacher-profile">
+      <div class="profile-pic"></div>
+      <div class="teacher-info">
+        <div>{{ name }}</div>
+        <div>Subject: Computer Science</div>
+      </div>
+    </div>
+    <button class="logout" onclick="window.location.href='/logout'">Logout</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showSection('dashboard-section', this)">Dashboard</div>
+    <div class="tab" onclick="showSection('upload-section', this)">Upload Test</div>
+    <div class="tab" onclick="showSection('results-section', this)">View Results</div>
+    <div class="tab">More ▸</div>
+  </div>
+
+  <div class="main-content">
+
+    <div id="dashboard-section" style="display: flex; gap: 20px; width: 100%;">
+      <div class="upload-section">
+        <h3>Welcome, {{ name }}</h3>
+        <p>This is the dashboard area.</p>
+      </div>
+
+      <div class="submissions-section">
+        <h3>Recent Submissions</h3>
+        <div class="submissions-list">
+          {% for submission in submissions %}
+            <div>{{ submission.student_name }} - {{ submission.assignment_title }} ({{ submission.timestamp }})</div>
+          {% else %}
+            <div>No submissions yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div id="upload-section" style="display: none; width: 100%;">
+      <div class="upload-section">
+        <h3>Create New Assignment</h3>
+        <form action="/create-assignment" method="POST">
+          Title: <input type="text" name="title" required><br><br>
+          {% for i in range(1, 2) %}
+            <fieldset>
+              <legend>Question {{ i }}</legend>
+              <textarea name="q{{ i }}" required placeholder="Enter question here"></textarea><br>
+              A: <input type="text" name="q{{ i }}_a" required><br>
+              B: <input type="text" name="q{{ i }}_b" required><br>
+              C: <input type="text" name="q{{ i }}_c" required><br>
+              D: <input type="text" name="q{{ i }}_d" required><br>
+              Correct Answer:
+              <select name="q{{ i }}_answer" required>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+              </select>
+            </fieldset>
+          {% endfor %}
+          <button type="submit">Create Assignment</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="results-section" style="display: none; width: 100%;">
+      <div class="upload-section">
+        <h3>Results</h3>
+
+        {% if results %}
+          {% for entry in results %}
+            <div style="margin-bottom: 24px;">
+              <h4>{{ entry.assignment.title }}</h4>
+              {% if entry.submissions %}
+                <table style="width:100%; border-collapse: collapse; margin-top: 8px;">
+                  <thead>
+                    <tr style="background: #f0f0f0;">
+                      <th style="padding:8px; border:1px solid #ddd;">Student</th>
+                      <th style="padding:8px; border:1px solid #ddd;">Score</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for sub in entry.submissions %}
+                    <tr>
+                      <td style="padding:8px; border:1px solid #ddd;">{{ sub.student }}</td>
+                      <td style="padding:8px; border:1px solid #ddd;">{{ sub.score }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              {% else %}
+                <p>No one has submitted “{{ entry.assignment.title }}” yet.</p>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <p>You haven't created any assignments yet.</p>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function showSection(sectionId, tabElement) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      tabElement.classList.add('active');
+
+      document.getElementById('dashboard-section').style.display = 'none';
+      document.getElementById('upload-section').style.display = 'none';
+      document.getElementById('results-section').style.display = 'none';
+
+      document.getElementById(sectionId).style.display = 'flex';
+    }
+  </script>
+
+</body>
+</html>
+ 
+teach res 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Teacher Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h2>Welcome, {{ session['username'] }} — Assignment Results</h2>
+    <a href="{{ url_for('teacher_dashboard', username=session['username']) }}">← Back to Dashboard</a>
+    <hr>
+    {% if assignments %}
+        {% for assignment in assignments %}
+            <h3>{{ assignment.title }}</h3>
+            {% if assignment.submissions %}
+                <table border="1" cellpadding="10">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Score</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for submission in assignment.submissions %}
+                            <tr>
+                                <td>{{ submission.student }}</td>
+                                <td>{{ submission.score }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No students have submitted this assignment yet.</p>
+            {% endif %}
+            <br>
+        {% endfor %}
+    {% else %}
+        <p>No assignments found.</p>
+    {% endif %}
+</body>
+</html>
+
+user.json
+{"student": {"student1": "scrypt:32768:8:1$1pUxLUGMlCahDuFK$34c0bf41058988721a97964369093df8c89fc95507d344966df8479c0aa71380f3cdbd3495f287eabf5f33672d97fa7206d209e253548db94498725e2008054c", "student2": "scrypt:32768:8:1$VGzjzyr2ZfyBmsKX$7c2f79b8b46f4c16ce070265d5fe085f1a445bb8d836a7af7e3de2222c541236f56eac90d7fc294e7856182f90eef494525655037240916d1abb4e2c9da5f100", "student3": "scrypt:32768:8:1$bMISsDE8LYfuqGOB$3187a6ac8207817d3ce50d2856a12d0ecce9f480f6cde2c1c34b3fed79d1162a028b496b8afa96205c81d8f5034a0155773e637a063d2f23335db07a238dde9b", "s1": "scrypt:32768:8:1$spmIovMR0Gacf8n4$2a5ec67afbc1bbe839b9e1fc65cf5ae634b72f3448fd1417fff6efe84de0811d8912bc3afd6c273ff30c6f8184f91282e05f813be2ddcec0b97f00048e172492", "stude342435": "scrypt:32768:8:1$P6BFCa9degzyMNCg$9a7427b43bd04598c415cf04e34f5e218829c4352cb8a6ae5ff43dcf801629ca30f5c113374bef7ab96f2a71ad1880db48a351124271e032051a5bea82071f57", "ashwitha": "scrypt:32768:8:1$AlClwN0etlSapRSH$8cab1cb862b229ca0f0e6eea9f57489d818f7f96a2bc9a6b05b44bfba1316d92cb944bfb04c36d338a473b7b2da16d6df6675838a00f17c216d98917ef9d671e", "tavi": "scrypt:32768:8:1$e6bF40c8hldeJ7Tt$624178b8a6c3b8eef49d4be23e9836f58563bb2199ae20f9668a98acc34a0c1c2c0cfc63080cad7e9059feb39d510611889cc889bdba390fff8823d2b66baaa0", "tavisha": "scrypt:32768:8:1$i10keyEqp5DnI3xd$7befc4f1a1707955822ea63feeb80a554793727d8022c6d52dae4a9d173c7f3c3a77a5561b1f36c5c049260fa22936b5db457f1877d526578352b351ceb3d0cf", "chavi": "scrypt:32768:8:1$Q2mYPA1GbwtZ43BX$be3e0d60ec1ea77413ccd1071667dcb6eda76d4426f09008bc51a103dd7f1551ed6a4add9ce1a452db210e14895d46ece2c460ccd81b0c3cec125096f130dfcc", "jeevan ": "scrypt:32768:8:1$1g92wZbTAixiCZy4$3e45c01438d33ce50f8720e29cefe4e2be77ff8f8d7932814529d3ffa72b829c002b3be510fd2d7c1ba400d7e5fbeaa5764d3d831ccf78456b5b5a8da5ad6e5a", "jeevan": "scrypt:32768:8:1$RTqblr1VsxFrDejn$8a17fde345f2e668da2f08cc33a41c7984bf590f234e7881e2d291f6775b6c27630504173aea551e3385ceebc016b80c632b024b6c6e88649da8e0db3ba97802"}, "teacher": {"t1": "scrypt:32768:8:1$W6uPPKSvOqxvoe6H$f8aff02716ddfbcbb8d95d84063dd2a58acff77cf5913fb62d197798b32d4072c5b392c721cd51017b9bce4ece814d43b5a2f1ba77b20396ea6b1607e8516240", "teac1": "scrypt:32768:8:1$TTCGRbqQXLfmM5lL$c2cbae5f9a7d7c1846474587ed959d9d86f7b45374f916de640ab5be8aa080f58b2e82348d8e44323d1e923a86389920701c691e74507477cde80e097830dc6b", "teach1": "scrypt:32768:8:1$6pzduYoKMeSXAfos$2626be1d153c1e3ec12ae811b388b2aff1c406385f2e5377491252d5547c3d417be7114cf366fb01bf76ab9663b19e3d6e8748fad8eeb9eb66bf397860a270dd", "teacher3": "scrypt:32768:8:1$QpVod5sngcEI2GaU$9e465516e3b46f7aab74163ce2ad500ee95eb819f19713fb2b376909371e381fbd75a697305773b1cc68b27ff4f5adc0774861f57dee17b591ec5254c16216b5", "teacher1": "scrypt:32768:8:1$yfpDIaesRqTCRtvN$ac6698c6dceba7778b327afb97fd4b5b1ef6ec87e0980225e3a26736f82974bb8e34217801eca1a941b4954f65ad4b9a21d276db61170a35293b8d6dc400cfe5", "teacher4": "scrypt:32768:8:1$vTvu8LJqABV7mrVQ$b7c98b13192b010542f8a8866ee89740068d6f41a9e474f89461bfc072d4a9d33702313bfbe259aeb9244a584d7fc4708e6f82d8732850a6a39270697303e0b3", "teacher234": "scrypt:32768:8:1$td4w8mcTEpA78782$81db4982f0f7e7617a1b6099a08eeaed83f59624bea092f38c6abd707d0a278cc87e444ee831086e77e77fbf751e4ed1517642effd159a1d1d18fa19a4903484", "admin": "scrypt:32768:8:1$hAu33pQOX6uMIOub$24fe9e99ac63786f43ba2646b13f09cd17f16fbd371bb0ffbfb591704b8f880ffc141311511c72b1f38e64df95851d253f553e8b00fcc7d44ae6b9ebd80896f1", "admin1": "scrypt:32768:8:1$qHOhmcTUPptmw51W$e077c2ac892004df2ab83a9215f5d1567a29bcea90f9665658063f76f87a9acb9f78ddb8f9a8ca0a752256613d03f32b82a982a91e7556815d3ede75309d8b50"}, "admin": {"admin": "scrypt:32768:8:1$OBhU5Z6foKK6CfXv$1b50f0196e61abd060d974c0b0e90833e6658a9bb43bab23d110f959d4cd59f8af8b76fddcf750821fdd27a9009f18f6b58c40c9d98236a101f6a47d5ce825d3"}}
+
+app.py 
+from flask import Flask, render_template, request, redirect, url_for, session
+from werkzeug.security import generate_password_hash, check_password_hash
+from pymongo import MongoClient
+from bson import ObjectId
+import os, json
+
+app = Flask(__name__)
+app.secret_key = 'super_secret_key'
+
+# MongoDB setup
+client = MongoClient('mongodb://localhost:27017/')
+db = client['emvi_portal']
+assignments_collection = db['assignments']
+answers_collection = db['student_answers']
+
+# User handling via local JSON
+users_file = 'users.json'
+if os.path.exists(users_file):
+    with open(users_file, 'r') as f:
+        users = json.load(f)
+else:
+    users = {'student': {}, 'teacher': {}, 'admin': {}}
+
+# Local student to-do list
+student_todos = {}
+
+# Routes
+
+@app.route('/')
+def home():
+    return render_template('login.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        role = request.form['role']
+        username = request.form['username']
+        password = request.form['password']
+
+        if role not in users:
+            users[role] = {}
+
+        if username in users[role]:
+            return "User already exists. <a href='/register'>Try again</a>"
+
+        users[role][username] = generate_password_hash(password)
+
+        with open(users_file, 'w') as f:
+            json.dump(users, f)
+
+        return redirect(url_for('home'))
+    return render_template('register.html')
+
+@app.route('/admin-login')
+def admin_login():
+    return render_template('admin_login.html')
+
+@app.route('/login', methods=['POST'])
+def login():
+    role = request.form['role']
+    username = request.form['username']
+    password = request.form['password']
+
+    user_hash = users.get(role, {}).get(username)
+    if user_hash and check_password_hash(user_hash, password):
+        session['username'] = username
+        session['role'] = role
+
+        if role == 'student':
+            student_todos.setdefault(username, [])
+            return redirect(url_for('student_dashboard', username=username))
+        elif role == 'teacher':
+            return redirect(url_for('teacher_dashboard', username=username))
+        elif role == 'admin':
+            return redirect(url_for('admin_dashboard', username=username))
+    else:
+        if role == 'admin':
+            return "Invalid admin credentials. <a href='/admin-login'>Try again</a>"
+        return "Invalid credentials. <a href='/'>Try again</a>"
+
+@app.route('/admin_dashboard/<username>')
+def admin_dashboard(username):
+    if session.get('role') != 'admin':
+        return redirect(url_for('home'))
+
+    return render_template('admin_dashboard.html', name=username)
+
+@app.route('/teacher_dashboard/<username>')
+def teacher_dashboard(username):
+    if session.get('role') != 'teacher':
+        return redirect(url_for('home'))
+
+    assignments = list(assignments_collection.find({'created_by': username}))
+    results = []
+
+    for assignment in assignments:
+        submissions = list(answers_collection.find({'assignment_id': str(assignment['_id'])}))
+        results.append({
+            'assignment': assignment,
+            'submissions': submissions
+        })
+
+    return render_template('teacher_dashboard.html', name=username, results=results)
+
+@app.route('/create-assignment', methods=['POST'])
+def create_assignment():
+    if session.get('role') != 'teacher':
+        return redirect(url_for('home'))
+
+    assignment = {
+        'title': request.form['title'],
+        'created_by': session['username'],
+        'questions': []
+    }
+
+    for i in range(1, 11):  # 10 questions
+        question_text = request.form.get(f'q{i}')
+        if question_text:
+            question = {
+                'question': question_text,
+                'options': {
+                    'A': request.form.get(f'q{i}_a'),
+                    'B': request.form.get(f'q{i}_b'),
+                    'C': request.form.get(f'q{i}_c'),
+                    'D': request.form.get(f'q{i}_d')
+                },
+                'answer': request.form.get(f'q{i}_answer')
+            }
+            assignment['questions'].append(question)
+
+    assignments_collection.insert_one(assignment)
+    return redirect(url_for('teacher_dashboard', username=session['username']))
+
+@app.route('/dashboard/student/<username>')
+def student_dashboard(username):
+    if session.get('role') != 'student':
+        return redirect(url_for('home'))
+
+    assignments = list(assignments_collection.find())
+    for a in assignments:
+        a['_id'] = str(a['_id'])
+
+    return render_template('student_dashboard.html', name=username, assignments=assignments, todos=student_todos.get(username, []))
+
+@app.route('/attempt-assignment/<assignment_id>', methods=['GET', 'POST'])
+def attempt_assignment(assignment_id):
+    assignment = assignments_collection.find_one({'_id': ObjectId(assignment_id)})
+
+    if not assignment:
+        return "Assignment not found."
+
+    if request.method == 'POST':
+        answers = {}
+        score = 0
+
+        for i, question in enumerate(assignment['questions']):
+            ans = request.form.get(f'answer_{i}')
+            correct = question.get('answer')
+            answers[str(i)] = ans
+
+            if ans and correct and ans.strip().upper() == correct.strip().upper():
+                score += 1
+
+        answers_collection.insert_one({
+            'student': session['username'],
+            'assignment_id': assignment_id,
+            'answers': answers,
+            'score': score
+        })
+
+        return redirect(url_for('student_results', username=session['username']))
+
+    assignment['_id'] = str(assignment['_id'])
+    return render_template('attempt_assignment.html', assignment=assignment)
+
+@app.route('/student-results/<username>')
+def student_results(username):
+    if session.get('role') != 'student':
+        return redirect(url_for('home'))
+
+    submissions = list(answers_collection.find({'student': username}))
+    for s in submissions:
+        assignment = assignments_collection.find_one({'_id': ObjectId(s['assignment_id'])})
+        if assignment:
+            s['assignment'] = assignment['title']
+        else:
+            s['assignment'] = 'Assignment Deleted'
+    return render_template('student_results.html', submissions=submissions)
+
+@app.route('/add-todo', methods=['POST'])
+def add_todo():
+    if session.get('role') != 'student':
+        return redirect(url_for('home'))
+
+    username = request.form['username']
+    task = request.form['task']
+    student_todos.setdefault(username, []).append(task)
+    return redirect(url_for('student_dashboard', username=username))
+
+@app.route('/delete-todo/<username>/<int:index>', methods=['POST'])
+def delete_todo(username, index):
+    if session.get('role') != 'student':
+        return redirect(url_for('home'))
+
+    if username in student_todos and 0 <= index < len(student_todos[username]):
+        del student_todos[username][index]
+    return redirect(url_for('student_dashboard', username=username))
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/')
+
+if __name__ == '__main__':
+    app.run(debug=True)
+

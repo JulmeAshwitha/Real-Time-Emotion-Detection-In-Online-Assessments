@@ -1,0 +1,552 @@
+<!--<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(to right, #0d47a1, #1565c0);
+            color: white;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .profile {
+            display: flex;
+            align-items: center;
+        }
+
+        .profile-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-image: url('/static/logo.png');
+            background-size: cover;
+            background-position: center;
+            margin-right: 10px;
+        }
+
+        .profile-name {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .logout {
+            font-size: 18px;
+            text-decoration: none;
+            color: white;
+        }
+
+        .logout:hover {
+            color: #e0e0e0;
+        }
+
+        .nav {
+            display: flex;
+            background-color: #e0e0e0;
+            padding: 10px 30px;
+            margin-top: 20px;
+        }
+
+        .nav button {
+            background: none;
+            border: none;
+            font-size: 16px;
+            margin-right: 20px;
+            cursor: pointer;
+            padding: 10px 20px;
+            color: #333;
+        }
+
+        .nav button.active {
+            background-color: #0d47a1;
+            color: white;
+            border-radius: 6px;
+        }
+
+        section {
+            padding: 30px;
+            display: none;
+        }
+
+        section.active {
+            display: block;
+        }
+
+        .card {
+            background-color: white;
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .view-button {
+            background-color: #0d47a1;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .view-button:hover {
+            background-color: #1565c0;
+        }
+
+        .delete-button {
+            background-color: #c0392b;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .delete-button:hover {
+            background-color: #e74c3c;
+        }
+
+        .section-heading {
+            font-size: 22px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #0d47a1;
+        }
+
+        .details {
+            display: none;
+            font-size: 14px;
+            color: #555;
+            margin-top: 10px;
+        }
+
+        .details.visible {
+            display: block;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            font-size: 14px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="profile">
+            <div class="profile-circle"></div>
+            <div class="profile-name">Admin {{ name }}</div>
+        </div>
+        <a class="logout" href="{{ url_for('logout') }}">Logout</a>
+    </div>
+
+    <div class="nav">
+        <button class="tab-btn active" onclick="showTab('assignments')">Assignments</button>
+        <button class="tab-btn" onclick="showTab('users')">Users</button>
+        <button class="tab-btn" onclick="showTab('results')">Results</button>
+    </div>
+
+    <!-- Assignments Section --
+    <section id="assignments" class="active">
+        <div class="section-heading">Assignments</div>
+        {% for assignment in assignments %}
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">{{ assignment.title }}</div>
+                <div class="action-buttons">
+                    <button class="view-button" onclick="toggleDetails('assignment-{{ assignment._id }}')">View</button>
+                    <form action="{{ url_for('delete_assignment', assignment_id=assignment._id) }}" method="POST" style="display:inline;">
+                        <button class="delete-button" onclick="return confirm('Are you sure you want to delete this assignment?');">Delete</button>
+                    </form>
+                </div>
+            </div>
+            <div class="details" id="assignment-{{ assignment._id }}">
+                <strong>Assignment Title:</strong> {{ assignment.title }}<br>
+                {% if assignment.description %}<strong>Description:</strong> {{ assignment.description }}<br>{% endif %}
+                {% if assignment.due_date %}<strong>Due Date:</strong> {{ assignment.due_date }}{% endif %}
+            </div>
+        </div>
+        {% else %}
+            <p>No assignments found.</p>
+        {% endfor %}
+    </section>
+
+    <!-- Users Section --
+    <section id="users">
+        <div class="section-heading">Users</div>
+        {% for role, usernames in users.items() %}
+            <div class="section-heading">{{ role.capitalize() }}s</div>
+            {% if usernames %}
+                {% for user in usernames %}
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">{{ user }}</div>
+                        <div class="action-buttons">
+                            <button class="view-button" onclick="toggleDetails('user-{{ role }}-{{ user }}')">View</button>
+                            <form action="{{ url_for('delete_user', role=role, username=user) }}" method="POST" style="display:inline;">
+                                <button class="delete-button" onclick="return confirm('Are you sure you want to delete this user?');">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="details" id="user-{{ role }}-{{ user }}">
+                        <strong>Username:</strong> {{ user }}<br>
+                        <strong>Role:</strong> {{ role }}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>No users found for role {{ role }}.</p>
+            {% endif %}
+        {% endfor %}
+    </section>
+
+    <!-- Results Section --
+    <section id="results">
+        <div class="section-heading">Results</div>
+        {% if results %}
+            {% for result in results %}
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Result for {{ result.username }} - {{ result.assignment_title }}</div>
+                    <div class="action-buttons">
+                        <button class="view-button" onclick="toggleDetails('result-{{ result._id }}')">View</button>
+                    </div>
+                </div>
+                <div class="details" id="result-{{ result._id }}">
+                    <strong>Username:</strong> {{ result.username }}<br>
+                    <strong>Assignment:</strong> {{ result.assignment_title }}<br>
+                    <strong>Score:</strong> {{ result.score }}<br>
+                    {% if result.details %}
+                    <strong>Details:</strong> {{ result.details }}<br>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No results found.</p>
+        {% endif %}
+    </section>
+
+    <div class="footer">
+        &copy; {{ current_year }} Your Company. All rights reserved.
+    </div>
+
+<script>
+    function showTab(tabId) {
+        document.querySelectorAll('section').forEach(section => {
+            section.classList.remove('active');
+        });
+        document.getElementById(tabId).classList.add('active');
+
+        document.querySelectorAll('.nav button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.currentTarget.classList.add('active');
+    }
+
+    function toggleDetails(id) {
+        const el = document.getElementById(id);
+        if (el.classList.contains('visible')) {
+            el.classList.remove('visible');
+        } else {
+            el.classList.add('visible');
+        }
+    }
+</script>
+
+</body>
+</html>
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(to right, #0d47a1, #1565c0);
+            color: white;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .profile {
+            display: flex;
+            align-items: center;
+        }
+
+        .profile-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-image: url('/static/logo.png');
+            background-size: cover;
+            background-position: center;
+            margin-right: 10px;
+        }
+
+        .profile-name {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .logout {
+            font-size: 18px;
+            text-decoration: none;
+            color: white;
+        }
+
+        .logout:hover {
+            color: #e0e0e0;
+        }
+
+        .nav {
+            display: flex;
+            background-color: #e0e0e0;
+            padding: 10px 30px;
+            margin-top: 20px;
+        }
+
+        .nav button {
+            background: none;
+            border: none;
+            font-size: 16px;
+            margin-right: 20px;
+            cursor: pointer;
+            padding: 10px 20px;
+            color: #333;
+        }
+
+        .nav button.active {
+            background-color: #0d47a1;
+            color: white;
+            border-radius: 6px;
+        }
+
+        section {
+            padding: 30px;
+            display: none;
+        }
+
+        section.active {
+            display: block;
+        }
+
+        .card {
+            background-color: white;
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .view-button {
+            background-color: #0d47a1;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .view-button:hover {
+            background-color: #1565c0;
+        }
+
+        .delete-button {
+            background-color: #c0392b;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .delete-button:hover {
+            background-color: #e74c3c;
+        }
+
+        .section-heading {
+            font-size: 22px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #0d47a1;
+        }
+
+        .details {
+            display: none;
+            font-size: 14px;
+            color: #555;
+            margin-top: 10px;
+        }
+
+        .details.visible {
+            display: block;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            font-size: 14px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="profile">
+            <div class="profile-circle"></div>
+            <div class="profile-name">Admin {{ name }}</div>
+        </div>
+        <a class="logout" href="{{ url_for('logout') }}">Logout</a>
+    </div>
+
+    <div class="nav">
+        <button class="tab-btn active" onclick="showTab('assignments')">Assignments</button>
+        <button class="tab-btn" onclick="showTab('users')">Users</button>
+        <button class="tab-btn" onclick="showTab('results')">Results</button>
+    </div>
+
+    <!-- Assignments Section -->
+    <section id="assignments" class="active">
+        <div class="section-heading">Assignments</div>
+        {% for assignment in assignments %}
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">{{ assignment.title }}</div>
+                <div class="action-buttons">
+                    <button class="view-button" onclick="toggleDetails('assignment-{{ assignment._id }}')">View</button>
+                    <form action="{{ url_for('delete_assignment', assignment_id=assignment._id) }}" method="POST" style="display:inline;">
+                        <button class="delete-button" onclick="return confirm('Are you sure you want to delete this assignment?');">Delete</button>
+                    </form>
+                </div>
+            </div>
+            <div class="details" id="assignment-{{ assignment._id }}">
+                <strong>Assignment Title:</strong> {{ assignment.title }}<br>
+                <strong>Description:</strong> {{ assignment.description }}<br>
+                <strong>Due Date:</strong> {{ assignment.due_date }}
+            </div>
+        </div>
+        {% endfor %}
+    </section>
+
+    <!-- Users Section -->
+    <section id="users">
+        <div class="section-heading">Users</div>
+        {% for role, usernames in users.items() %}
+            <div class="section-heading">{{ role.capitalize() }}s</div>
+            {% for user in usernames %}
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">{{ user }}</div>
+                    <button class="view-button" onclick="toggleDetails('user-{{ user }}')">View</button>
+                </div>
+                <div class="details" id="user-{{ user }}">
+                    <strong>Username:</strong> {{ user }}<br>
+                    <strong>Role:</strong> {{ role }}
+                </div>
+            </div>
+            {% endfor %}
+        {% endfor %}
+    </section>
+
+    <!-- Results Section -->
+    <section id="results">
+        <div class="section-heading">Results</div>
+        {% for result in results %}
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">{{ result.student  }} scored {{ result.score }}/2 in "{{ result.assignment_title }}"</div>
+                <button class="view-button" onclick="toggleDetails('result-{{ result.student }}')">View</button>
+            </div>
+            <div class="details" id="result-{{ result.student }}">
+                <strong>Student:</strong> {{ result.student }}<br>
+                <strong>Assignment:</strong> {{ result.assignment_title }}<br>
+                <strong>Score:</strong> {{ result.score }}/10
+            </div>
+        </div>
+        {% endfor %}
+    </section>
+
+    <div class="footer">
+        <p>&copy; 2025 Admin Dashboard. All Rights Reserved.</p>
+    </div>
+
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll("section").forEach(section => section.classList.remove("active"));
+            document.getElementById(tabId).classList.add("active");
+            document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+            event.target.classList.add("active");
+        }
+
+        function toggleDetails(id) {
+            const details = document.getElementById(id);
+            details.classList.toggle('visible');
+        }
+    </script>
+
+</body>
+</html>

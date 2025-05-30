@@ -1,0 +1,163 @@
+<!--<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login | EmVi</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-box {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 350px;
+    }
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    input[type="submit"],
+    .admin-btn {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .role-select {
+      margin-top: 10px;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <img src="{{ url_for('static', filename='emvi-logo.jpeg') }}" alt="Logo" style="width: 80px;">
+
+    <h2>Login</h2>
+    <form action="/login" method="POST">
+      <input type="text" name="username" placeholder="Username" required />
+      <input type="password" name="password" placeholder="Password" required />
+
+      <div class="role-select">
+        <input type="radio" id="student" name="role" value="student" checked>
+        <label for="student">Student</label>
+        <input type="radio" id="teacher" name="role" value="teacher">
+        <label for="teacher">Teacher</label>
+      </div>
+
+      <input type="submit" value="Login" />
+    </form>
+
+    <!-- Admin login redirects to a different page --
+    <a href="/admin-login">
+      <button class="admin-btn" type="button">Login as Admin</button>
+    </a>
+  </div>
+</body>
+</html>
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login | EmVi</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-box {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 350px;
+    }
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    input[type="submit"],
+    .admin-btn {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .role-select {
+      margin-top: 10px;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <img src="{{ url_for('static', filename='emvi-logo.jpeg') }}" alt="Logo" style="width: 80px;">
+    <h2>Login</h2>
+
+    <form id="loginForm" action="/login" method="POST">
+      <input type="text" name="username" id="username" placeholder="Username" required />
+      <input type="password" name="password" id="password" placeholder="Password" required />
+
+      <div class="role-select">
+        <input type="radio" id="student" name="role" value="student" checked>
+        <label for="student">Student</label>
+        <input type="radio" id="teacher" name="role" value="teacher">
+        <label for="teacher">Teacher</label>
+      </div>
+
+      <input type="submit" value="Login" />
+    </form>
+
+    <button class="admin-btn" type="button" onclick="checkAdmin()">Login as Admin</button>
+  </div>
+
+  <script>
+    function checkAdmin() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      if (username === 'emvi' && password === '1234567890') {
+        // Redirect to admin login
+        window.location.href = '/admin-login';
+      } else {
+        alert('Invalid admin credentials. Please enter correct username and password.');
+      }
+    }
+  </script>
+</body>
+</html>

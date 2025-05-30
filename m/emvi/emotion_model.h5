@@ -1,0 +1,51 @@
+import pandas as pd
+import numpy as np
+from keras.utils import to_categorical
+from sklearn.model_selection import train_test_split
+from keras.models import Sequential
+from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense
+
+# Load dataset
+df = pd.read_csv('emotion/fer2013.csv')
+
+# Prepare data
+width, height = 48, 48
+X = []
+y = []
+
+for index, row in df.iterrows():
+    pixels = np.array(row['pixels'].split(), dtype='float32')
+    pixels = pixels.reshape((width, height, 1))
+    X.append(pixels)
+    y.append(row['emotion'])
+
+X = np.array(X) / 255.0  # Normalize
+y = to_categorical(np.array(y))  # One-hot encoding
+
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
+
+# Build CNN model
+model = Sequential()
+model.add(Conv2D(32, (3,3), activation='relu', input_shape=(48,48,1)))
+model.add(MaxPooling2D(pool_size=(2,2)))
+model.add(Dropout(0.25))
+
+model.add(Conv2D(64, (3,3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2,2)))
+model.add(Dropout(0.25))
+
+model.add(Flatten())
+model.add(Dense(128, activation='relu'))
+model.add(Dropout(0.5))
+model.add(Dense(7, activation='softmax'))  # FER-2013 has 7 emotion classes
+
+# Compile
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+# Train
+model.fit(X_train, y_train, epochs=30, batch_size=64, validation_data=(X_test, y_test))
+
+# Save model
+model.save('emotion/emotion_model.h5')
+print("Model trained and saved as emotion_model.h5")

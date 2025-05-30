@@ -1,0 +1,2280 @@
+login
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login | Emotion Detection System</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right,rgb(252, 250, 255),rgb(188, 196, 210));
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .login-box {
+      background: #fff;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      width: 350px;
+      text-align: center;
+    }
+
+    .login-box h2 {
+      margin-bottom: 25px;
+      color: #333;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    input[type="submit"] {
+      width: 100%;
+      padding: 12px;
+      background-color:rgb(29, 103, 201);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    input[type="submit"]:hover {
+      background-color:rgb(248, 248, 248);
+    }
+
+    .role-select {
+      margin: 10px 0;
+      text-align: left;
+    }
+
+    .role-select label {
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h2>Login</h2>
+    <form action="/login" method="post">
+      <input type="text" name="username" placeholder="Username" required>
+      <input type="password" name="password" placeholder="Password" required>
+
+      <!-- Optional: Role selector -->
+      <div class="role-select">
+        <label><input type="radio" name="role" value="student" checked> Student</label><br>
+        <label><input type="radio" name="role" value="teacher"> Teacher</label>
+      </div>
+
+      <input type="submit" value="Login">
+    </form>
+  </div>
+</body>
+</html>
+student
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background-color: #f0f2f5;
+    }
+
+    /* Topbar */
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .student-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+    }
+
+    .student-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .student-info div {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+    .logout {
+      background: white;
+      border: none;
+      color: #0d47a1;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .logout:hover {
+      background: #f1f1f1;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab {
+      padding: 14px 24px;
+      cursor: pointer;
+      color: #333;
+      font-weight: 500;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .tab:hover {
+      background: #f0f0f0;
+    }
+
+    .tab.active {
+      background: #0d47a1;
+      color: white;
+    }
+
+    /* Content Layout */
+    .main-content {
+      display: flex;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .assignments {
+      flex: 3;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .assignment-card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.07);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .assignment-card button {
+      padding: 10px 20px;
+      background: #0d47a1;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: background 0.3s ease;
+    }
+
+    .assignment-card button:hover {
+      background: #1565c0;
+    }
+
+    .todo {
+      flex: 1;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.07);
+    }
+
+    .todo h4 {
+      margin-bottom: 10px;
+    }
+
+    .todo ul {
+      list-style: none;
+      padding-left: 10px;
+    }
+
+    .todo li {
+      margin: 10px 0;
+      height: 10px;
+      width: 10px;
+      background: #0d47a1;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="student-profile">
+      <div class="profile-pic"></div>
+      <div class="student-info">
+        <div>{{ name }}</div>
+        <div>Roll No: CS123</div>
+      </div>
+    </div>
+    <button class="logout">Logout</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active">Dashboard</div>
+    <div class="tab">Assignment</div>
+    <div class="tab">Performance</div>
+    <div class="tab">More ▸</div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Assignments -->
+    <div class="assignments">
+      <div class="assignment-card">
+        <div>Assignment 1</div>
+        <button>Attempt</button>
+      </div>
+      <div class="assignment-card">
+        <div>Assignment 2</div>
+        <button>Attempt</button>
+      </div>
+    </div>
+
+    <!-- To Do List -->
+    <div class="todo">
+      <h4>To do:</h4>
+      <ul>
+        <li></li>
+        <li></li>
+        <li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    // Tabs interaction
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        alert(`You clicked on ${tab.textContent} tab!`);
+      });
+    });
+
+    // Logout button
+    const logoutBtn = document.querySelector('.logout');
+    logoutBtn.addEventListener('click', () => {
+      window.location.href = '/'; // redirect to login
+    });
+
+    // Attempt buttons
+    const attemptButtons = document.querySelectorAll('.assignment-card button');
+    attemptButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        alert('Starting the test...');
+        // window.location.href = '/test_page'; // Use this if test page exists
+      });
+    });
+  </script>
+
+</body>
+</html>
+teacker
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teacher Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background-color: #f0f2f5;
+    }
+
+    /* Topbar */
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .teacher-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+    }
+
+    .teacher-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .teacher-info div {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+    .logout {
+      background: white;
+      border: none;
+      color: #0d47a1;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .logout:hover {
+      background: #f1f1f1;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab {
+      padding: 14px 24px;
+      cursor: pointer;
+      color: #333;
+      font-weight: 500;
+      transition: background 0.2s ease;
+    }
+
+    .tab:hover {
+      background: #f0f0f0;
+    }
+
+    .tab.active {
+      background: #0d47a1;
+      color: white;
+    }
+
+    /* Content */
+    .main-content {
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+    }
+
+    .upload-section, .submissions-section {
+      background: white;
+      flex: 1;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.07);
+    }
+
+    .upload-section h3, .submissions-section h3 {
+      margin-bottom: 10px;
+      color: #0d47a1;
+    }
+
+    .upload-section input[type="file"] {
+      margin-bottom: 10px;
+    }
+
+    .upload-section button {
+      padding: 10px 20px;
+      background: #0d47a1;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .upload-section button:hover {
+      background: #1565c0;
+    }
+
+    .submissions-list {
+      margin-top: 10px;
+    }
+
+    .submissions-list div {
+      background: #f6f8fa;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border-left: 4px solid #0d47a1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="teacher-profile">
+      <div class="profile-pic"></div>
+      <div class="teacher-info">
+        <div>{{ name }}</div>
+        <div>Subject: Computer Science</div>
+      </div>
+    </div>
+    <button class="logout">Logout</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active">Dashboard</div>
+    <div class="tab">Upload Test</div>
+    <div class="tab">View Results</div>
+    <div class="tab">More ▸</div>
+  </div>
+
+  <!-- Content -->
+  <div class="main-content">
+    <!-- Upload Test -->
+    <div class="upload-section">
+      <h3>Upload New Test</h3>
+      <form>
+        <input type="file" name="test_file" />
+        <br />
+        <button type="submit">Upload</button>
+      </form>
+    </div>
+
+    <!-- View Student Submissions -->
+    <div class="submissions-section">
+      <h3>Recent Submissions</h3>
+      <div class="submissions-list">
+        <div>Student1 - Assignment 1</div>
+        <div>Student2 - Assignment 2</div>
+        <div>Student3 - Assignment 1</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Tabs interaction
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        alert(`Navigating to ${tab.textContent} tab...`);
+      });
+    });
+
+    // Logout button
+    const logoutBtn = document.querySelector('.logout');
+    logoutBtn.addEventListener('click', () => {
+      window.location.href = '/'; // redirect to login
+    });
+  </script>
+
+</body>
+</html>
+app
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory
+import os
+
+app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'uploads'
+
+# Dummy login data
+users = {
+    'student': {'student1': 'pass123', 'student2': 'pass123'},
+    'teacher': {'teacher1': 'teach123', 'teacher2': 'teach123'}
+}
+
+# In-memory store for uploaded test files
+uploaded_tests = []
+
+@app.route('/')
+def home():
+    return render_template('login.html')
+
+@app.route('/login', methods=['POST'])
+def login():
+    role = request.form['role']
+    username = request.form['username']
+    password = request.form['password']
+
+    if username in users.get(role, {}) and users[role][username] == password:
+        if role == 'student':
+            return render_template('student_dashboard.html', name=username, tests=uploaded_tests)
+        elif role == 'teacher':
+            return render_template('teacher_dashboard.html', name=username)
+    else:
+        return "Invalid credentials. <a href='/'>Try again</a>"
+
+@app.route('/upload-test', methods=['POST'])
+def upload_test():
+    if 'test_file' in request.files:
+        file = request.files['test_file']
+        if file.filename != '':
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+            file.save(filepath)
+            uploaded_tests.append(file.filename)
+    return redirect('/login')
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+student
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background-color: #f0f2f5;
+    }
+
+    /* Topbar */
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .student-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+    }
+
+    .student-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .student-info div {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+    .logout {
+      background: white;
+      border: none;
+      color: #0d47a1;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .logout:hover {
+      background: #f1f1f1;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab {
+      padding: 14px 24px;
+      cursor: pointer;
+      color: #333;
+      font-weight: 500;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .tab:hover {
+      background: #f0f0f0;
+    }
+
+    .tab.active {
+      background: #0d47a1;
+      color: white;
+    }
+
+    /* Content Layout */
+    .main-content {
+      display: flex;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .assignments {
+      flex: 3;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .assignment-card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.07);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .assignment-card button {
+      padding: 10px 20px;
+      background: #0d47a1;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: background 0.3s ease;
+    }
+
+    .assignment-card button:hover {
+      background: #1565c0;
+    }
+
+    /* To-Do List Styling */
+    .todo-container {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        margin-top: 40px;
+        max-width: 500px;
+    }
+
+    .todo-container h2 {
+        color: #2b6777;
+        margin-bottom: 15px;
+    }
+
+    .todo-container ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .todo-container li {
+        background: #f0f8ff;
+        margin: 8px 0;
+        padding: 10px 15px;
+        border-radius: 5px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .todo-container form {
+        display: flex;
+        margin-top: 15px;
+    }
+
+    .todo-container input[type="text"] {
+        flex-grow: 1;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    .todo-container button {
+        background-color: #52ab98;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        margin-left: 8px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .todo-container button:hover {
+        background-color: #3d8b80;
+    }
+
+    .todo-container .delete-btn {
+        background-color: #e74c3c;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        color: white;
+        cursor: pointer;
+    }
+
+    .todo-container .delete-btn:hover {
+        background-color: #c0392b;
+    }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="student-profile">
+      <div class="profile-pic"></div>
+      <div class="student-info">
+        <div>{{ name }}</div>
+        <div>Roll No: CS123</div>
+      </div>
+    </div>
+    <button class="logout">Logout</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active">Dashboard</div>
+    <div class="tab">Assignment</div>
+    <div class="tab">Performance</div>
+    <div class="tab">More ▸</div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Assignments -->
+    <div class="assignments">
+      <div class="assignment-card">
+        <div>Assignment 1</div>
+        <button>Attempt</button>
+      </div>
+      <div class="assignment-card">
+        <div>Assignment 2</div>
+        <button>Attempt</button>
+      </div>
+    </div>
+
+    <!-- To Do List -->
+   <!-- To Do List -->
+<div class="todo">
+    <h4>To do:</h4>
+    <ul>
+      {% for item in todos %}
+        <li style="margin-bottom:10px;">
+          {{ item }}
+          <form action="/delete-todo/{{ name }}/{{ loop.index0 }}" method="post" style="display:inline;">
+            <button type="submit" style="margin-left:10px;">❌</button>
+          </form>
+        </li>
+      {% else %}
+        <li>No tasks yet!</li>
+      {% endfor %}
+    </ul>
+  
+    <!-- Add new task -->
+    <form action="/add-todo" method="post" style="margin-top:10px;">
+      <input type="hidden" name="username" value="{{ name }}">
+      <input type="text" name="task" placeholder="New task..." required style="width: 70%; padding: 6px;">
+      <button type="submit">Add</button>
+    </form>
+  </div>
+  
+
+  <!-- JavaScript -->
+  <script>
+    // Tabs interaction
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        alert(`You clicked on ${tab.textContent} tab!`);
+      });
+    });
+
+    // Logout button
+    const logoutBtn = document.querySelector('.logout');
+    logoutBtn.addEventListener('click', () => {
+      window.location.href = '/'; // redirect to login
+    });
+
+    // Attempt buttons
+    const attemptButtons = document.querySelectorAll('.assignment-card button');
+    attemptButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        alert('Starting the test...');
+        // window.location.href = '/test_page'; // Use this if test page exists
+      });
+    });
+  </script>
+
+</body>
+</html>
+teacher
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teacher Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background-color: #f0f2f5;
+    }
+
+    /* Topbar */
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .teacher-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+    }
+
+    .teacher-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .teacher-info div {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+    .logout {
+      background: white;
+      border: none;
+      color: #0d47a1;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .logout:hover {
+      background: #f1f1f1;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab {
+      padding: 14px 24px;
+      cursor: pointer;
+      color: #333;
+      font-weight: 500;
+      transition: background 0.2s ease;
+    }
+
+    .tab:hover {
+      background: #f0f0f0;
+    }
+
+    .tab.active {
+      background: #0d47a1;
+      color: white;
+    }
+
+    /* Content */
+    .main-content {
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .upload-section, .submissions-section {
+      background: white;
+      flex: 1;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.07);
+    }
+
+    .upload-section h3, .submissions-section h3 {
+      margin-bottom: 10px;
+      color: #0d47a1;
+    }
+
+    .upload-section input[type="file"] {
+      margin-bottom: 10px;
+    }
+
+    .upload-section button {
+      padding: 10px 20px;
+      background: #0d47a1;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .upload-section button:hover {
+      background: #1565c0;
+    }
+
+    .submissions-list {
+      margin-top: 10px;
+    }
+
+    .submissions-list div {
+      background: #f6f8fa;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border-left: 4px solid #0d47a1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="teacher-profile">
+      <div class="profile-pic"></div>
+      <div class="teacher-info">
+        <div>{{ name }}</div>
+        <div>Subject: Computer Science</div>
+      </div>
+    </div>
+    <button class="logout">Logout</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="showSection('dashboard-section', this)">Dashboard</div>
+    <div class="tab" onclick="showSection('upload-section', this)">Upload Test</div>
+    <div class="tab" onclick="showSection('results-section', this)">View Results</div>
+    <div class="tab">More ▸</div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- Dashboard Section -->
+    <div id="dashboard-section" style="display: flex; gap: 20px; width: 100%;">
+      <div class="upload-section">
+        <h3>Welcome, {{ name }}</h3>
+        <p>This is the dashboard area.</p>
+      </div>
+
+      <div class="submissions-section">
+        <h3>Recent Submissions</h3>
+        <div class="submissions-list">
+          <div>Student1 - Assignment 1</div>
+          <div>Student2 - Assignment 2</div>
+          <div>Student3 - Assignment 1</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload Test Section (Initially Blank) -->
+    <div id="upload-section" style="display: none; width: 100%;">
+      <div class="upload-section">
+        <h3>Upload Test</h3>
+        <p>This is a blank Upload Test page.</p>
+        <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teacher Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background-color: #f0f2f5;
+    }
+
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .teacher-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+    }
+
+    .teacher-info div {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+    .logout {
+      background: white;
+      border: none;
+      color: #0d47a1;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .tabs {
+      display: flex;
+      background: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab {
+      padding: 14px 24px;
+      cursor: pointer;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .tab.active {
+      background: #0d47a1;
+      color: white;
+    }
+
+    .main-content {
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+      flex-direction: column;
+    }
+
+    .upload-section {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.07);
+    }
+
+    .upload-section h3 {
+      margin-bottom: 10px;
+      color: #0d47a1;
+    }
+
+    fieldset {
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      padding: 10px;
+    }
+
+    textarea, input[type="text"], select {
+      width: 100%;
+      padding: 8px;
+      margin: 4px 0;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #0d47a1;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #1565c0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="teacher-profile">
+      <div class="profile-pic"></div>
+      <div class="teacher-info">
+        <div>{{ name }}</div>
+        <div>Subject: Computer Science</div>
+      </div>
+    </div>
+    <button class="logout">Logout</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active">Dashboard</div>
+    <div class="tab">Upload Test</div>
+    <div class="tab">View Results</div>
+  </div>
+
+  <!-- Content -->
+  <div class="main-content">
+    <!-- Upload Section with Assignment Form -->
+    <div class="upload-section">
+      <h3>Create New Assignment (10 MCQs)</h3>
+      <form action="/create-assignment" method="POST">
+        Title: <input type="text" name="title" required><br><br>
+        {% for i in range(1, 11) %}
+          <fieldset>
+            <legend>Question {{ i }}</legend>
+            <textarea name="q{{ i }}" required placeholder="Enter question here"></textarea><br>
+            A: <input type="text" name="q{{ i }}_a" required><br>
+            B: <input type="text" name="q{{ i }}_b" required><br>
+            C: <input type="text" name="q{{ i }}_c" required><br>
+            D: <input type="text" name="q{{ i }}_d" required><br>
+            Correct Answer:
+            <select name="q{{ i }}_answer" required>
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+              <option value="D">D</option>
+            </select>
+          </fieldset>
+        {% endfor %}
+        <button type="submit">Create Assignment</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        alert(`Navigating to ${tab.textContent} tab...`);
+      });
+    });
+
+    
+  </script>
+
+
+
+      </div>
+    </div>
+
+    <!-- View Results Section (Placeholder for now) -->
+    <div id="results-section" style="display: none; width: 100%;">
+      <div class="upload-section">
+        <h3>Results</h3>
+        <p>This is a placeholder for viewing results.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function showSection(sectionId, tabElement) {
+      // Handle tab highlighting
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      tabElement.classList.add('active');
+
+      // Show the correct section
+      document.getElementById('dashboard-section').style.display = 'none';
+      document.getElementById('upload-section').style.display = 'none';
+      document.getElementById('results-section').style.display = 'none';
+
+      document.getElementById(sectionId).style.display = 'flex';
+    }
+
+    document.querySelector('.logout').addEventListener('click', () => {
+      window.location.href = '/';
+    });
+  </script>
+
+</body>
+</html>
+
+
+
+
+
+
+app.py 
+
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, session
+from werkzeug.security import generate_password_hash, check_password_hash
+from pymongo import MongoClient
+import os
+import json
+
+app = Flask(__name__)
+app.secret_key = 'super_secret_key'
+app.config['UPLOAD_FOLDER'] = 'uploads'
+
+# MongoDB Setup
+client = MongoClient('mongodb://localhost:27017/')
+db = client['emvi_portal']
+tests_collection = db['tests']
+
+# Local JSON-based user system
+users_file = 'users.json'
+if os.path.exists(users_file):
+    with open(users_file, 'r') as f:
+        users = json.load(f)
+else:
+    users = {'student': {}, 'teacher': {}}
+
+# In-memory to-do store
+student_todos = {}
+
+@app.route('/')
+def home():
+    return render_template('login.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        role = request.form['role']
+        username = request.form['username']
+        password = request.form['password']
+
+        if username in users.get(role, {}):
+            return "User already exists. <a href='/register'>Try again</a>"
+
+        hashed_password = generate_password_hash(password)
+        users[role][username] = hashed_password
+
+        with open(users_file, 'w') as f:
+            json.dump(users, f)
+
+        return redirect(url_for('home'))
+
+    return render_template('register.html')
+
+@app.route('/login', methods=['POST'])
+def login():
+    role = request.form['role']
+    username = request.form['username']
+    password = request.form['password']
+
+    user_pass_hash = users.get(role, {}).get(username)
+    if user_pass_hash and check_password_hash(user_pass_hash, password):
+        session['username'] = username
+        session['role'] = role
+
+        if role == 'student':
+            if username not in student_todos:
+                student_todos[username] = []
+            return redirect(url_for('login_post_redirect', role=role, username=username))
+        elif role == 'teacher':
+            return redirect(url_for('login_post_redirect', role=role, username=username))
+    else:
+        return "Invalid credentials. <a href='/'>Try again</a>"
+
+@app.route('/upload-test', methods=['POST'])
+def upload_test():
+    if 'test_file' in request.files:
+        file = request.files['test_file']
+        if file.filename != '':
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            file.save(filepath)
+
+            # Store file info in MongoDB
+            tests_collection.insert_one({'filename': file.filename, 'filepath': filepath})
+    return redirect(url_for('login_post_redirect', role='teacher', username=session['username']))
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route('/add-todo', methods=['POST'])
+def add_todo():
+    username = request.form['username']
+    task = request.form['task']
+    if username in student_todos:
+        student_todos[username].append(task)
+    return redirect(url_for('login_post_redirect', role='student', username=username))
+
+@app.route('/delete-todo/<username>/<int:index>', methods=['POST'])
+def delete_todo(username, index):
+    if username in student_todos and 0 <= index < len(student_todos[username]):
+        del student_todos[username][index]
+    return redirect(url_for('login_post_redirect', role='student', username=username))
+
+@app.route('/dashboard/<role>/<username>')
+def login_post_redirect(role, username):
+    if role == 'student':
+        tests = list(tests_collection.find())
+        return render_template('student_dashboard.html', name=username, tests=tests, todos=student_todos.get(username, []))
+    elif role == 'teacher':
+        return render_template('teacher_dashboard.html', name=username)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/')
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+
+    teacher
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teacher Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background-color: #f0f2f5;
+    }
+
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .teacher-profile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+      background-image: url('{{ url_for('static', filename='emvi-logo.jpeg') }}');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .teacher-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .teacher-info div {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      width: fit-content;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .logout {
+      background: white;
+      border: none;
+      color: #0d47a1;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .logout:hover {
+      background: #f1f1f1;
+    }
+
+    .tabs {
+      display: flex;
+      background: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab {
+      padding: 14px 24px;
+      cursor: pointer;
+      color: #333;
+      font-weight: 500;
+      transition: background 0.2s ease;
+    }
+
+    .tab:hover {
+      background: #f0f0f0;
+    }
+
+    .tab.active {
+      background: #0d47a1;
+      color: white;
+    }
+
+    .main-content {
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .upload-section, .submissions-section {
+      background: white;
+      flex: 1;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.07);
+    }
+
+    .upload-section h3, .submissions-section h3 {
+      margin-bottom: 10px;
+      color: #0d47a1;
+    }
+
+    .submissions-list {
+      margin-top: 10px;
+    }
+
+    .submissions-list div {
+      background: #f6f8fa;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border-left: 4px solid #0d47a1;
+    }
+
+    fieldset {
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      padding: 10px;
+    }
+
+    textarea, input[type="text"], select {
+      width: 100%;
+      padding: 8px;
+      margin: 4px 0;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #0d47a1;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #1565c0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="teacher-profile">
+      <div class="profile-pic"></div>
+      <div class="teacher-info">
+        <div>{{ name }}</div>
+        <div>Subject: Computer Science</div>
+      </div>
+    </div>
+    <button class="logout">Logout</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showSection('dashboard-section', this)">Dashboard</div>
+    <div class="tab" onclick="showSection('upload-section', this)">Upload Test</div>
+    <div class="tab" onclick="showSection('results-section', this)">View Results</div>
+    <div class="tab">More ▸</div>
+  </div>
+
+  <div class="main-content">
+
+    <div id="dashboard-section" style="display: flex; gap: 20px; width: 100%;">
+      <div class="upload-section">
+        <h3>Welcome, {{ name }}</h3>
+        <p>This is the dashboard area.</p>
+      </div>
+
+      <div class="submissions-section">
+        <h3>Recent Submissions</h3>
+        <div class="submissions-list">
+          <div>Student1 - Assignment 1</div>
+          <div>Student2 - Assignment 2</div>
+          <div>Student3 - Assignment 1</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="upload-section" style="display: none; width: 100%;">
+      <div class="upload-section">
+        <h3>Create New Assignment (10 MCQs)</h3>
+        <form action="/create-assignment" method="POST">
+          Title: <input type="text" name="title" required><br><br>
+          {% for i in range(1, 11) %}
+            <fieldset>
+              <legend>Question {{ i }}</legend>
+              <textarea name="q{{ i }}" required placeholder="Enter question here"></textarea><br>
+              A: <input type="text" name="q{{ i }}_a" required><br>
+              B: <input type="text" name="q{{ i }}_b" required><br>
+              C: <input type="text" name="q{{ i }}_c" required><br>
+              D: <input type="text" name="q{{ i }}_d" required><br>
+              Correct Answer:
+              <select name="q{{ i }}_answer" required>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+              </select>
+            </fieldset>
+          {% endfor %}
+          <button type="submit">Create Assignment</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="results-section" style="display: none; width: 100%;">
+      <div class="upload-section">
+        <h3>Results</h3>
+        <p>This is a placeholder for viewing results.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function showSection(sectionId, tabElement) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      tabElement.classList.add('active');
+
+      document.getElementById('dashboard-section').style.display = 'none';
+      document.getElementById('upload-section').style.display = 'none';
+      document.getElementById('results-section').style.display = 'none';
+
+      document.getElementById(sectionId).style.display = 'flex';
+    }
+
+    document.querySelector('.logout').addEventListener('click', () => {
+      window.location.href = '/';
+    });
+  </script>
+
+</body>
+</html>
+
+
+
+
+
+student
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background-color: #f0f2f5;
+    }
+
+    /* Topbar */
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .student-profile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+      background-image: url('{{ url_for('static', filename='emvi-logo.jpeg') }}');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .student-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .student-info div {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      width: fit-content;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .logout {
+      background: white;
+      border: none;
+      color: #0d47a1;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .logout:hover {
+      background: #f1f1f1;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab {
+      padding: 14px 24px;
+      cursor: pointer;
+      color: #333;
+      font-weight: 500;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .tab:hover {
+      background: #f0f0f0;
+    }
+
+    .tab.active {
+      background: #0d47a1;
+      color: white;
+    }
+
+    /* Content Layout */
+    .main-content {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .assignments {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .assignment-card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.07);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .assignment-card button {
+      padding: 10px 20px;
+      background: #0d47a1;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: background 0.3s ease;
+    }
+
+    .assignment-card button:hover {
+      background: #1565c0;
+    }
+
+    /* To-Do List Styling */
+    .todo {
+      flex: 1;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      height: fit-content;
+    }
+
+    .todo h4 {
+      font-size: 18px;
+      color: #0d47a1;
+      margin-bottom: 10px;
+    }
+
+    .todo ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .todo li {
+      background: #f0f8ff;
+      margin: 8px 0;
+      padding: 10px 15px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .todo form {
+      display: inline;
+    }
+
+    .todo input[type="text"] {
+      padding: 8px;
+      width: 70%;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .todo button {
+      background-color: #52ab98;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+
+    .todo button:hover {
+      background-color: #3d8b80;
+    }
+
+    .todo .delete-btn {
+      background-color: #e74c3c;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .todo .delete-btn:hover {
+      background-color: #c0392b;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Topbar -->
+  <div class="topbar">
+    <div class="student-profile">
+      <div class="profile-pic"></div>
+      <div class="student-info">
+        <div>{{ name }}</div>
+        <div>Roll No: CS123</div>
+      </div>
+    </div>
+    <button class="logout">Logout</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active">Dashboard</div>
+    <div class="tab">Assignment</div>
+    <div class="tab">Performance</div>
+    <div class="tab">More ▸</div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Assignments -->
+    <div class="assignments">
+      <div class="assignment-card">
+        <div>Assignment 1</div>
+        <button>Attempt</button>
+      </div>
+      <div class="assignment-card">
+        <div>Assignment 2</div>
+        <button>Attempt</button>
+      </div>
+    </div>
+
+    <!-- To Do List -->
+    <div class="todo">
+      <h4>To do:</h4>
+      <ul>
+        {% for item in todos %}
+          <li>
+            {{ item }}
+            <form action="/delete-todo/{{ name }}/{{ loop.index0 }}" method="post">
+              <button type="submit" class="delete-btn">❌</button>
+            </form>
+          </li>
+        {% else %}
+          <li>No tasks yet!</li>
+        {% endfor %}
+      </ul>
+
+      <form action="/add-todo" method="post" style="margin-top:15px;">
+        <input type="hidden" name="username" value="{{ name }}">
+        <input type="text" name="task" placeholder="New task..." required>
+        <button type="submit">Add</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    // Tabs interaction (popup removed)
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        // No alert
+      });
+    });
+
+    // Logout button
+    const logoutBtn = document.querySelector('.logout');
+    logoutBtn.addEventListener('click', () => {
+      window.location.href = '/'; // redirect to login
+    });
+
+    // Attempt buttons (popup removed)
+    const attemptButtons = document.querySelectorAll('.assignment-card button');
+    attemptButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // No alert
+        // Optionally add navigation logic here
+        // window.location.href = '/test_page';
+      });
+    });
+  </script>
+
+</body>
+</html>
+
+
+
+Login
+<!--<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login | Emotion Detection System</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right,rgb(252, 250, 255),rgb(188, 196, 210));
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .login-box {
+      background: #fff;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      width: 350px;
+      text-align: center;
+    }
+
+    .login-box h2 {
+      margin-bottom: 25px;
+      color: #333;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    input[type="submit"] {
+      width: 100%;
+      padding: 12px;
+      background-color:rgb(29, 103, 201);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    input[type="submit"]:hover {
+      background-color:rgb(248, 248, 248);
+    }
+
+    .role-select {
+      margin: 10px 0;
+      text-align: left;
+    }
+
+    .role-select label {
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h2>Login</h2>
+    <form action="/login" method="post">
+      <input type="text" name="username" placeholder="Username" required>
+      <input type="password" name="password" placeholder="Password" required>
+
+      <!-- Optional: Role selector --
+      <div class="role-select">
+        <label><input type="radio" name="role" value="student" checked> Student</label><br>
+        <label><input type="radio" name="role" value="teacher"> Teacher</label>
+      </div>
+
+      <input type="submit" value="Login">
+    </form>
+  </div>
+</body>
+</html>-->
+<!--
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login | Emotion Detection System</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, rgb(252, 250, 255), rgb(188, 196, 210));
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .login-box {
+      background: #fff;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      width: 350px;
+      text-align: center;
+    }
+
+    .logo {
+      width: 100px;
+      margin-bottom: 20px;
+    }
+
+    .login-box h2 {
+      margin-bottom: 25px;
+      color: #333;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    input[type="submit"] {
+      width: 100%;
+      padding: 12px;
+      background-color: rgb(29, 103, 201);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    input[type="submit"]:hover {
+      background-color: rgb(248, 248, 248);
+      color: rgb(29, 103, 201);
+      border: 1px solid rgb(29, 103, 201);
+    }
+
+    .role-select {
+      margin: 10px 0;
+      text-align: left;
+    }
+
+    .role-select label {
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <!-- Logo image --
+    <img src="{{ url_for('static', filename='emvi-logo.jpeg') }}" alt="em-vi logo" class="logo" />
+
+
+    <h2>Login</h2>
+    <form action="/login" method="post">
+      <input type="text" name="username" placeholder="Username" required>
+      <input type="password" name="password" placeholder="Password" required>
+
+      <div class="role-select">
+        <label><input type="radio" name="role" value="student" checked> Student</label><br>
+        <label><input type="radio" name="role" value="teacher"> Teacher</label>
+      </div>
+
+      <input type="submit" value="Login">
+    </form>
+  </div>
+</body>
+</html>
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login | Emotion Detection System</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, rgb(252, 250, 255), rgb(188, 196, 210));
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .login-box {
+      background: #fff;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      width: 350px;
+      text-align: center;
+    }
+
+    .logo {
+      width: 100px;
+      margin-bottom: 20px;
+    }
+
+    .login-box h2 {
+      margin-bottom: 25px;
+      color: #333;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    input[type="submit"] {
+      width: 100%;
+      padding: 12px;
+      background-color: rgb(29, 103, 201);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    input[type="submit"]:hover {
+      background-color: rgb(248, 248, 248);
+      color: rgb(29, 103, 201);
+      border: 1px solid rgb(29, 103, 201);
+    }
+
+    .role-select {
+      margin: 10px 0;
+      text-align: left;
+    }
+
+    .role-select label {
+      font-size: 14px;
+    }
+
+    .register-link {
+      margin-top: 15px;
+      display: block;
+      font-size: 14px;
+    }
+
+    .register-link a {
+      color: rgb(29, 103, 201);
+      text-decoration: none;
+    }
+
+    .register-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <img src="{{ url_for('static', filename='emvi-logo.jpeg') }}" alt="em-vi logo" class="logo" />
+    <h2>Login</h2>
+    <form action="/login" method="post">
+      <input type="text" name="username" placeholder="Username" required>
+      <input type="password" name="password" placeholder="Password" required>
+
+      <div class="role-select">
+        <label><input type="radio" name="role" value="student" checked> Student</label><br>
+        <label><input type="radio" name="role" value="teacher"> Teacher</label>
+      </div>
+
+      <input type="submit" value="Login">
+    </form>
+    <div class="register-link">
+      New user? <a href="/register">Register here</a>
+    </div>
+  </div>
+</body>
+</html>

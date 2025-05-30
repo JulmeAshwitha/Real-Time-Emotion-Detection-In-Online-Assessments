@@ -1,0 +1,369 @@
+<!--
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register | Emotion Detection System</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, rgb(252, 250, 255), rgb(188, 196, 210));
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .register-box {
+      background: #fff;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      width: 350px;
+      text-align: center;
+    }
+
+    .register-box h2 {
+      margin-bottom: 25px;
+      color: #333;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    .role-select {
+      text-align: left;
+      margin: 15px 0;
+    }
+
+    .role-select label {
+      font-size: 14px;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input[type="submit"] {
+      width: 100%;
+      padding: 12px;
+      background-color: rgb(29, 103, 201);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    input[type="submit"]:hover {
+      background-color: white;
+      color: rgb(29, 103, 201);
+      border: 1px solid rgb(29, 103, 201);
+    }
+
+    .login-link {
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    .login-link a {
+      color: rgb(29, 103, 201);
+      text-decoration: none;
+    }
+
+    .login-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="register-box">
+    <h2>Create Account</h2>
+    <form action="/register" method="POST">
+      <input type="text" name="username" placeholder="Username" required>
+      <input type="password" name="password" placeholder="Password" required>
+
+      <div class="role-select">
+        <p><strong>Select Role:</strong></p>
+        <label><input type="radio" name="role" value="student" checked> Student</label>
+        <label><input type="radio" name="role" value="teacher"> Teacher</label>
+        <label><input type="radio" name="role" value="admin"> Admin</label>
+      </div>
+
+      <input type="submit" value="Register">
+    </form>
+
+    <div class="login-link">
+      Already registered? <a href="/login">Login here</a>
+    </div>
+  </div>
+</body>
+</html>
+-->
+<!--
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register | EmVi</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #f8fafc, #e2e8f0);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 440px;
+      text-align: center;
+    }
+    .container img {
+      width: 90px;
+      margin-bottom: 20px;
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+    .role-select {
+      text-align: left;
+      margin: 15px 0;
+    }
+    .role-select label {
+      margin-right: 15px;
+    }
+    input[type="submit"] {
+      width: 100%;
+      padding: 12px;
+      margin-top: 15px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    input[type="submit"]:hover {
+      background: #1d4ed8;
+    }
+    .login-link {
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    .login-link a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+    .login-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+  <script>
+    function toggleFields() {
+      const role = document.querySelector('input[name="role"]:checked').value;
+      document.getElementById("student-fields").style.display = role === "student" ? "block" : "none";
+      document.getElementById("teacher-fields").style.display = role === "teacher" ? "block" : "none";
+      document.getElementById("admin-fields").style.display = role === "admin" ? "block" : "none";
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <img src="{{ url_for('static', filename='emvi-logo.jpeg') }}" alt="Logo" />
+    <h2>Create Your Account</h2>
+    {% if error %}
+      <p style="color:red;">{{ error }}</p>
+    {% endif %}
+    <form action="/register" method="POST">
+      <div class="role-select">
+        <label><input type="radio" name="role" value="student" checked onclick="toggleFields()"> Student</label>
+        <label><input type="radio" name="role" value="teacher" onclick="toggleFields()"> Teacher</label>
+        <label><input type="radio" name="role" value="admin" onclick="toggleFields()"> Admin</label>
+      </div>
+
+      <input type="text" name="username" placeholder="Username" required />
+      <input type="email" name="email" placeholder="Email" required />
+
+      <div id="student-fields">
+        <input type="text" name="rollno" placeholder="Roll No" required />
+      </div>
+
+      <div id="teacher-fields" style="display: none;">
+        <!-- Removed teacher_id field to keep backend consistent --
+      </div>
+
+      <div id="admin-fields" style="display: none;"></div>
+
+      <input type="password" name="password" placeholder="Password" required />
+      <input type="password" name="confirm_password" placeholder="Confirm Password" required />
+
+      <input type="submit" value="Register" />
+    </form>
+
+    <div class="login-link">
+      Already have an account? <a href="/">Login here</a>
+    </div>
+  </div>
+
+  <script>
+    window.onload = function () {
+      toggleFields();
+    };
+  </script>
+</body>
+</html>
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register | EmVi</title>
+  <style>
+    /* Your existing styles here (omitted for brevity) */
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #f8fafc, #e2e8f0);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 440px;
+      text-align: center;
+    }
+    .container img {
+      width: 90px;
+      margin-bottom: 20px;
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+    .role-select {
+      text-align: left;
+      margin: 15px 0;
+    }
+    .role-select label {
+      margin-right: 15px;
+    }
+    input[type="submit"] {
+      width: 100%;
+      padding: 12px;
+      margin-top: 15px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    input[type="submit"]:hover {
+      background: #1d4ed8;
+    }
+    .login-link {
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    .login-link a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+    .login-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+  <script>
+    function toggleFields() {
+      const role = document.querySelector('input[name="role"]:checked').value;
+      const studentFields = document.getElementById("student-fields");
+      if (role === "student") {
+        studentFields.style.display = "block";
+        studentFields.querySelector('input[name="rollno"]').setAttribute('required', 'required');
+      } else {
+        studentFields.style.display = "none";
+        studentFields.querySelector('input[name="rollno"]').removeAttribute('required');
+      }
+      // teacher/admin fields are empty, no extra inputs needed
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <img src="{{ url_for('static', filename='emvi-logo.jpeg') }}" alt="Logo" />
+    <h2>Create Your Account</h2>
+    {% if error %}
+      <p style="color:red;">{{ error }}</p>
+    {% endif %}
+    <form action="/register" method="POST">
+      <div class="role-select">
+        <label><input type="radio" name="role" value="student" checked onclick="toggleFields()"> Student</label>
+        <label><input type="radio" name="role" value="teacher" onclick="toggleFields()"> Teacher</label>
+        <label><input type="radio" name="role" value="admin" onclick="toggleFields()"> Admin</label>
+      </div>
+
+      <input type="text" name="username" placeholder="Username" required />
+      <input type="email" name="email" placeholder="Email" required />
+
+      <div id="student-fields">
+        <input type="text" name="rollno" placeholder="Roll No" required />
+      </div>
+
+      <input type="password" name="password" placeholder="Password" required />
+      <input type="password" name="confirm_password" placeholder="Confirm Password" required />
+
+      <input type="submit" value="Register" />
+    </form>
+
+    <div class="login-link">
+      Already have an account? <a href="/">Login here</a>
+    </div>
+  </div>
+
+  <script>
+    window.onload = function () {
+      toggleFields();
+    };
+  </script>
+</body>
+</html>

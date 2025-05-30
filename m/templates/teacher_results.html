@@ -1,0 +1,189 @@
+<!--<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Teacher Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h2>Welcome, {{ session['username'] }} — Assignment Results</h2>
+    <a href="{{ url_for('teacher_dashboard', username=session['username']) }}">← Back to Dashboard</a>
+    <hr>
+    {% if assignments %}
+        {% for assignment in assignments %}
+            <h3>{{ assignment.title }}</h3>
+            {% if assignment.submissions %}
+                <table border="1" cellpadding="10">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Score</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for submission in assignment.submissions %}
+                            <tr>
+                                <td>{{ submission.student }}</td>
+                                <td>{{ submission.score }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No students have submitted this assignment yet.</p>
+            {% endif %}
+            <br>
+        {% endfor %}
+    {% else %}
+        <p>No assignments found.</p>
+    {% endif %}
+</body>
+</html>
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Teacher Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h2 {
+            color: #2e7d60;
+        }
+
+        a {
+            color: #2e7d60;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .performance-button {
+            display: inline-flex;
+            align-items: center;
+            background-color: #4CAF8D;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            text-decoration: none;
+            margin-left: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .performance-button:hover {
+            background-color: #3a8d71;
+        }
+
+        .performance-button img {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #e0f2f1;
+            color: #004d40;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        hr {
+            margin: 20px 0;
+        }
+
+        h3 {
+            margin-top: 30px;
+            color: #00695c;
+        }
+
+        p {
+            font-style: italic;
+            color: #777;
+        }
+
+        .assignment-section {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h2>Welcome, {{ session['username'] }} — Assignment Results</h2>
+    <a href="{{ url_for('teacher_dashboard', username=session['username']) }}">← Back to Dashboard</a>
+    <hr>
+
+    {% if assignments %}
+        {% for assignment in assignments %}
+            <div class="assignment-section">
+                <h3>{{ assignment.title }}</h3>
+                {% if assignment.submissions %}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for submission in assignment.submissions %}
+                                <tr>
+                                    <td>
+                                        {{ submission.student }}
+                                        <a href="{{ url_for('student_performance', student=submission.student, assignment_id=assignment._id) }}" class="performance-button">
+                                            <img src="{{ url_for('static', filename='performance-icon.png') }}" alt="Icon">
+                                            Performance
+                                        </a>
+                                    </td>
+                                    <td>{{ submission.score }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>No students have submitted this assignment yet.</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No assignments found.</p>
+    {% endif %}
+</body>
+</html>

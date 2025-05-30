@@ -1,0 +1,556 @@
+<!--<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Attempt Assignment</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f2f5;
+      padding: 20px;
+    }
+
+    h2 {
+      color: #0d47a1;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .student-profile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+      background-image: url('{{ url_for('static', filename='profile-pic.jpg') }}');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .student-info div {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .assignment-details {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      max-width: 900px;
+      margin: 40px auto;
+    }
+
+    .question {
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .question p {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #0d47a1;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      padding-left: 20px;
+    }
+
+    .option input[type="radio"] {
+      margin-right: 10px;
+    }
+
+    button {
+      background: #0d47a1;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: bold;
+      display: block;
+      margin: 30px auto 0;
+      width: 50%;
+    }
+
+    button:hover {
+      background: #1565c0;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 50px;
+      font-size: 14px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Topbar --
+<div class="topbar">
+  <div class="student-profile">
+    <div class="profile-pic"></div>
+    <div class="student-info">
+      <div>{{ session['username'] }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Assignment Details --
+<div class="assignment-details">
+  <h2>{{ assignment.title }}</h2>
+
+  <form method="POST">
+    {% for question in assignment.questions %}
+      <div class="question">
+        <p>Q{{ loop.index }}. {{ question.question }}</p>
+        <div class="option">
+          <input type="radio" id="answer_{{ loop.index }}_A" name="answer_{{ loop.index }}" value="A" required>
+          <label for="answer_{{ loop.index }}_A">{{ question.options.A }}</label>
+        </div>
+        <div class="option">
+          <input type="radio" id="answer_{{ loop.index }}_B" name="answer_{{ loop.index }}" value="B" required>
+          <label for="answer_{{ loop.index }}_B">{{ question.options.B }}</label>
+        </div>
+        <div class="option">
+          <input type="radio" id="answer_{{ loop.index }}_C" name="answer_{{ loop.index }}" value="C" required>
+          <label for="answer_{{ loop.index }}_C">{{ question.options.C }}</label>
+        </div>
+        <div class="option">
+          <input type="radio" id="answer_{{ loop.index }}_D" name="answer_{{ loop.index }}" value="D" required>
+          <label for="answer_{{ loop.index }}_D">{{ question.options.D }}</label>
+        </div>
+      </div>
+    {% endfor %}
+
+    <button type="submit">Submit Assignment</button>
+  </form>
+</div>
+
+<!-- Footer --
+<div class="footer">
+  <p>&copy; 2025 Student Portal. All Rights Reserved.</p>
+</div>
+<script>
+function startModel(assignmentId) {
+    fetch('/start_model', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ assignment_id: assignmentId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'started') {
+            alert('Emotion detection started!');
+        } else {
+            alert('Failed to start: ' + data.message);
+        }
+    })
+    .catch(err => alert('Request failed: ' + err));
+}
+</script>
+
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Attempt Assignment</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f2f5;
+      padding: 20px;
+    }
+
+    h2 {
+      color: #0d47a1;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .student-profile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+      background-image: url('{{ url_for('static', filename='profile-pic.jpg') }}');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .student-info div {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .assignment-details {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      max-width: 900px;
+      margin: 40px auto;
+    }
+
+    .question {
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .question p {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #0d47a1;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      padding-left: 20px;
+    }
+
+    .option input[type="radio"] {
+      margin-right: 10px;
+    }
+
+    button {
+      background: #0d47a1;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: bold;
+      display: block;
+      margin: 30px auto 0;
+      width: 50%;
+    }
+
+    button:hover {
+      background: #1565c0;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 50px;
+      font-size: 14px;
+      color: #888;
+    }
+
+    /* Separate button style for Start Detection */
+    .start-detection-btn {
+      width: auto;
+      margin: 0 0 20px 0;
+      padding: 10px 20px;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Topbar --
+<div class="topbar">
+  <div class="student-profile">
+    <div class="profile-pic"></div>
+    <div class="student-info">
+      <div>{{ session['username'] }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Assignment Details --
+<div class="assignment-details">
+  <h2>{{ assignment.title }}</h2>
+
+  <!-- Start Emotion Detection Button --
+  <button type="button" class="start-detection-btn" onclick="startModel('{{ assignment._id }}')">Start Emotion Detection</button>
+
+  <form method="POST">
+    {% for question in assignment.questions %}
+      <div class="question">
+        <p>Q{{ loop.index }}. {{ question.question }}</p>
+        <div class="option">
+          <input type="radio" id="answer_{{ loop.index }}_A" name="answer_{{ loop.index }}" value="A" required>
+          <label for="answer_{{ loop.index }}_A">{{ question.options.A }}</label>
+        </div>
+        <div class="option">
+          <input type="radio" id="answer_{{ loop.index }}_B" name="answer_{{ loop.index }}" value="B" required>
+          <label for="answer_{{ loop.index }}_B">{{ question.options.B }}</label>
+        </div>
+        <div class="option">
+          <input type="radio" id="answer_{{ loop.index }}_C" name="answer_{{ loop.index }}" value="C" required>
+          <label for="answer_{{ loop.index }}_C">{{ question.options.C }}</label>
+        </div>
+        <div class="option">
+          <input type="radio" id="answer_{{ loop.index }}_D" name="answer_{{ loop.index }}" value="D" required>
+          <label for="answer_{{ loop.index }}_D">{{ question.options.D }}</label>
+        </div>
+      </div>
+    {% endfor %}
+
+    <button type="submit">Submit Assignment</button>
+  </form>
+</div>
+
+<!-- Footer --
+<div class="footer">
+  <p>&copy; 2025 Student Portal. All Rights Reserved.</p>
+</div>
+
+<script>
+function startModel(assignmentId) {
+    fetch('/start_model', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ assignment_id: assignmentId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'started') {
+            alert('Emotion detection started!');
+        } else {
+            alert('Failed to start: ' + data.message);
+        }
+    })
+    .catch(err => alert('Request failed: ' + err));
+}
+</script>
+
+</body>
+</html>-->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Attempt Assignment</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f2f5;
+      padding: 20px;
+    }
+
+    h2 {
+      color: #0d47a1;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .student-profile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+      background-image: url('{{ url_for('static', filename='profile-pic.jpg') }}');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .student-info div {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .assignment-details {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      max-width: 900px;
+      margin: 40px auto;
+    }
+
+    .question {
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .question p {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #0d47a1;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      padding-left: 20px;
+    }
+
+    .option input[type="radio"] {
+      margin-right: 10px;
+    }
+
+    button {
+      background: #0d47a1;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: bold;
+      display: block;
+      margin: 30px auto 0;
+      width: 50%;
+    }
+
+    button:hover {
+      background: #1565c0;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 50px;
+      font-size: 14px;
+      color: #888;
+    }
+
+    .start-detection-btn {
+      width: auto;
+      margin: 0 0 20px 0;
+      padding: 10px 20px;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="student-profile">
+    <div class="profile-pic"></div>
+    <div class="student-info">
+      <div>{{ session['username'] }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Assignment Details -->
+<div class="assignment-details">
+  <h2>{{ assignment.title }}</h2>
+
+  
+
+  <form method="POST">
+    {% for question in assignment.questions %}
+      <div class="question">
+        <p>Q{{ loop.index }}. {{ question.question }}</p>
+        <div class="option">
+          <input type="radio" id="answer_{{ loop.index }}_A" name="answer_{{ loop.index }}" value="A" required>
+          <label for="answer_{{ loop.index }}_A">{{ question.options.A }}</label>
+        </div>
+        <div class="option">
+          <input type="radio" id="answer_{{ loop.index }}_B" name="answer_{{ loop.index }}" value="B" required>
+          <label for="answer_{{ loop.index }}_B">{{ question.options.B }}</label>
+        </div>
+        <div class="option">
+          <input type="radio" id="answer_{{ loop.index }}_C" name="answer_{{ loop.index }}" value="C" required>
+          <label for="answer_{{ loop.index }}_C">{{ question.options.C }}</label>
+        </div>
+        <div class="option">
+          <input type="radio" id="answer_{{ loop.index }}_D" name="answer_{{ loop.index }}" value="D" required>
+          <label for="answer_{{ loop.index }}_D">{{ question.options.D }}</label>
+        </div>
+      </div>
+    {% endfor %}
+
+    <button type="submit">Submit Assignment</button>
+  </form>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <p>&copy; 2025 Student Portal. All Rights Reserved.</p>
+</div>
+
+<script>
+function startModel(assignmentId) {
+    fetch('/start_model', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ assignment_id: assignmentId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'started') {
+            alert('Emotion detection started!');
+        } else {
+            alert('Failed to start: ' + data.message);
+        }
+    })
+    .catch(err => alert('Request failed: ' + err));
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1056 @@
+<!--<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teacher Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background-color: #f0f2f5;
+    }
+
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .teacher-profile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+      background-image: url('{{ url_for('static', filename='emvi-logo.jpeg') }}');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .teacher-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .teacher-info div {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      width: fit-content;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .logout {
+      background: white;
+      border: none;
+      color: #0d47a1;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .logout:hover {
+      background: #f1f1f1;
+    }
+
+    .tabs {
+      display: flex;
+      background: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab {
+      padding: 14px 24px;
+      cursor: pointer;
+      color: #333;
+      font-weight: 500;
+      transition: background 0.2s ease;
+    }
+
+    .tab:hover {
+      background: #f0f0f0;
+    }
+
+    .tab.active {
+      background: #0d47a1;
+      color: white;
+    }
+
+    .main-content {
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .upload-section, .submissions-section {
+      background: white;
+      flex: 1;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.07);
+    }
+
+    .upload-section h3, .submissions-section h3 {
+      margin-bottom: 10px;
+      color: #0d47a1;
+    }
+
+    .submissions-list {
+      margin-top: 10px;
+    }
+
+    .submissions-list div {
+      background: #f6f8fa;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border-left: 4px solid #0d47a1;
+    }
+
+    fieldset {
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      padding: 10px;
+    }
+
+    textarea, input[type="text"], select {
+      width: 100%;
+      padding: 8px;
+      margin: 4px 0;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #0d47a1;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #1565c0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="teacher-profile">
+      <div class="profile-pic"></div>
+      <div class="teacher-info">
+        <div>{{ name }}</div>
+        <div>Subject: Computer Science</div>
+      </div>
+    </div>
+    <button class="logout" onclick="window.location.href='/logout'">Logout</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showSection('dashboard-section', this)">Dashboard</div>
+    <div class="tab" onclick="showSection('upload-section', this)">Upload Test</div>
+    <div class="tab" onclick="showSection('results-section', this)">View Results</div>
+    <div class="tab">More ▸</div>
+  </div>
+
+  <div class="main-content">
+
+    <div id="dashboard-section" style="display: flex; gap: 20px; width: 100%;">
+      <div class="upload-section">
+        <h3>Welcome, {{ name }}</h3>
+        <p>This is the dashboard area.</p>
+      </div>
+
+      <div class="submissions-section">
+        <h3>Recent Submissions</h3>
+        <div class="submissions-list">
+          {% for submission in submissions %}
+            <div>{{ submission.student_name }} - {{ submission.assignment_title }} ({{ submission.timestamp }})</div>
+          {% else %}
+            <div>No submissions yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div id="upload-section" style="display: none; width: 100%;">
+      <div class="upload-section">
+        <h3>Create New Assignment</h3>
+        <form action="/create-assignment" method="POST" id="assignment-form">
+          Title: <input type="text" name="title" required><br><br>
+          
+          <!-- Dynamic Question Fields --
+          <div id="questions-container">
+            <fieldset class="question">
+              <legend>Question 1</legend>
+              <textarea name="q1" required placeholder="Enter question here"></textarea><br>
+              A: <input type="text" name="q1_a" required><br>
+              B: <input type="text" name="q1_b" required><br>
+              C: <input type="text" name="q1_c" required><br>
+              D: <input type="text" name="q1_d" required><br>
+              Correct Answer:
+              <select name="q1_answer" required>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+              </select>
+            </fieldset>
+          </div>
+          
+          <!-- Button to Add More Questions --
+          <button type="button" onclick="addQuestion()">Add Another Question</button><br><br>
+          
+          <button type="submit">Create Assignment</button>
+        </form>
+      </div>
+    </div>
+    
+    <div id="results-section" style="display: none; width: 100%;">
+      <div class="upload-section">
+        <h3>Results</h3>
+
+        {% if results %}
+  {% for entry in results %}
+    <div style="margin-bottom: 24px;">
+      <h4>{{ entry.assignment.title }}</h4>
+      {% if entry.submissions %}
+        <table style="width:100%; border-collapse: collapse; margin-top: 8px;">
+          <thead>
+            <tr style="background: #f0f0f0;">
+              <th style="padding:8px; border:1px solid #ddd;">Student</th>
+              <th style="padding:8px; border:1px solid #ddd;">Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sub in entry.submissions %}
+            <tr>
+              <td style="padding:8px; border:1px solid #ddd;">
+                {{ sub.student }}
+                <a href="{{ url_for('performance', student=sub.student, assignment_id=entry.assignment._id) }}" 
+                   style="margin-left: 10px; display: inline-flex; align-items: center; background-color: #4CAF8D; color: white; padding: 4px 10px; border-radius: 6px; font-size: 13px; text-decoration: none; transition: background 0.3s;">
+                  <img src="{{ url_for('static', filename='performance-icon.png') }}" alt="Icon" style="width: 14px; height: 14px; margin-right: 6px;">
+                  Performance
+                </a>
+              </td>
+              <td style="padding:8px; border:1px solid #ddd;">{{ sub.score }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p>No one has submitted “{{ entry.assignment.title }}” yet.</p>
+      {% endif %}
+    </div>
+  {% endfor %}
+{% else %}
+  <p>You haven't created any assignments yet.</p>
+{% endif %}
+
+
+  </div>
+
+  <script>
+    function showSection(sectionId, tabElement) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      tabElement.classList.add('active');
+      document.getElementById('dashboard-section').style.display = 'none';
+      document.getElementById('upload-section').style.display = 'none';
+      document.getElementById('results-section').style.display = 'none';
+      document.getElementById(sectionId).style.display = 'flex';
+    }
+
+    // Function to add new question dynamically
+    let questionCount = 1;
+
+    function addQuestion() {
+      questionCount++;
+      
+      // Create a new question fieldset
+      const newQuestion = document.createElement('fieldset');
+      newQuestion.classList.add('question');
+      newQuestion.innerHTML = `
+        <legend>Question ${questionCount}</legend>
+        <textarea name="q${questionCount}" required placeholder="Enter question here"></textarea><br>
+        A: <input type="text" name="q${questionCount}_a" required><br>
+        B: <input type="text" name="q${questionCount}_b" required><br>
+        C: <input type="text" name="q${questionCount}_c" required><br>
+        D: <input type="text" name="q${questionCount}_d" required><br>
+        Correct Answer:
+        <select name="q${questionCount}_answer" required>
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+          <option value="D">D</option>
+        </select>
+      `;
+      
+      // Append the new question to the questions container
+      document.getElementById('questions-container').appendChild(newQuestion);
+    }
+  </script>
+
+</body>
+</html>
+-->
+
+<!--
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teacher Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background-color: #f0f2f5;
+    }
+
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .teacher-profile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+      background-image: url('{{ url_for('static', filename='emvi-logo.jpeg') }}');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .teacher-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .teacher-info div {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      width: fit-content;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .logout {
+      background: white;
+      border: none;
+      color: #0d47a1;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .logout:hover {
+      background: #f1f1f1;
+    }
+
+    .tabs {
+      display: flex;
+      background: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab {
+      padding: 14px 24px;
+      cursor: pointer;
+      color: #333;
+      font-weight: 500;
+      transition: background 0.2s ease;
+    }
+
+    .tab:hover {
+      background: #f0f0f0;
+    }
+
+    .tab.active {
+      background: #0d47a1;
+      color: white;
+    }
+
+    .main-content {
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .upload-section, .submissions-section {
+      background: white;
+      flex: 1;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.07);
+    }
+
+    .upload-section h3, .submissions-section h3 {
+      margin-bottom: 10px;
+      color: #0d47a1;
+    }
+
+    .submissions-list {
+      margin-top: 10px;
+    }
+
+    .submissions-list div {
+      background: #f6f8fa;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border-left: 4px solid #0d47a1;
+    }
+
+    fieldset {
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      padding: 10px;
+    }
+
+    textarea, input[type="text"], select {
+      width: 100%;
+      padding: 8px;
+      margin: 4px 0;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #0d47a1;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #1565c0;
+    }
+
+    /* New table styles for even columns */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed; /* equal width columns */
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      word-wrap: break-word;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f0f0f0;
+    }
+
+    /* Center align score and performance columns */
+    th:nth-child(2), td:nth-child(2),
+    th:nth-child(3), td:nth-child(3) {
+      text-align: center;
+      width: 25%;
+    }
+
+    /* Student column wider */
+    th:nth-child(1), td:nth-child(1) {
+      width: 50%;
+    }
+
+    /* Style for performance link button */
+    .performance-btn {
+      display: inline-flex;
+      align-items: center;
+      background-color: #4CAF8D;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+
+    .performance-btn:hover {
+      background-color: #3a8b6e;
+    }
+
+    .performance-btn img {
+      width: 14px;
+      height: 14px;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="teacher-profile">
+      <div class="profile-pic"></div>
+      <div class="teacher-info">
+        <div>{{ name }}</div>
+        <div>Subject: Computer Science</div>
+      </div>
+    </div>
+    <button class="logout" onclick="window.location.href='/logout'">Logout</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showSection('dashboard-section', this)">Dashboard</div>
+    <div class="tab" onclick="showSection('upload-section', this)">Upload Test</div>
+    <div class="tab" onclick="showSection('results-section', this)">View Results</div>
+    <div class="tab">More ▸</div>
+  </div>
+
+  <div class="main-content">
+
+    <div id="dashboard-section" style="display: flex; gap: 20px; width: 100%;">
+      <div class="upload-section">
+        <h3>Welcome, {{ name }}</h3>
+        <p>This is the dashboard area.</p>
+      </div>
+
+      <div class="submissions-section">
+        <h3>Recent Submissions</h3>
+        <div class="submissions-list">
+          {% for submission in submissions %}
+            <div>{{ submission.student_name }} - {{ submission.assignment_title }} ({{ submission.timestamp }})</div>
+          {% else %}
+            <div>No submissions yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div id="upload-section" style="display: none; width: 100%;">
+      <div class="upload-section">
+        <h3>Create New Assignment</h3>
+        <form action="/create-assignment" method="POST" id="assignment-form">
+          Title: <input type="text" name="title" required><br><br>
+          
+          <!-- Dynamic Question Fields --
+          <div id="questions-container">
+            <fieldset class="question">
+              <legend>Question 1</legend>
+              <textarea name="q1" required placeholder="Enter question here"></textarea><br>
+              A: <input type="text" name="q1_a" required><br>
+              B: <input type="text" name="q1_b" required><br>
+              C: <input type="text" name="q1_c" required><br>
+              D: <input type="text" name="q1_d" required><br>
+              Correct Answer:
+              <select name="q1_answer" required>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+              </select>
+            </fieldset>
+          </div>
+          
+          <!-- Button to Add More Questions --
+          <button type="button" onclick="addQuestion()">Add Another Question</button><br><br>
+          
+          <button type="submit">Create Assignment</button>
+        </form>
+      </div>
+    </div>
+    
+    <div id="results-section" style="display: none; width: 100%;">
+      <div class="upload-section">
+        <h3>Results</h3>
+
+        {% if results %}
+          {% for entry in results %}
+            <div style="margin-bottom: 24px;">
+              <h4>{{ entry.assignment.title }}</h4>
+              {% if entry.submissions %}
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Student</th>
+                      <th>Score</th>
+                      <th>Performance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for sub in entry.submissions %}
+                      <tr>
+                        <td>
+                          {{ sub.student }}
+                        </td>
+                        <td>{{ sub.score }}</td>
+                        <td>
+                          <a href="{{ url_for('performance', username=sub.student, assignment_id=entry.assignment._id) }}" class="performance-btn">
+
+                            <img src="{{ url_for('static', filename='performance-icon.png') }}" alt="Icon">
+                            Performance
+                          </a>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              {% else %}
+                <p>No one has submitted “{{ entry.assignment.title }}” yet.</p>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <p>You haven't created any assignments yet.</p>
+        {% endif %}
+
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function showSection(sectionId, tabElement) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      tabElement.classList.add('active');
+      document.getElementById('dashboard-section').style.display = 'none';
+      document.getElementById('upload-section').style.display = 'none';
+      document.getElementById('results-section').style.display = 'none';
+      document.getElementById(sectionId).style.display = 'flex';
+    }
+
+    // Function to add new question dynamically
+    let questionCount = 1;
+
+    function addQuestion() {
+      questionCount++;
+      
+      // Create a new question fieldset
+      const newQuestion = document.createElement('fieldset');
+      newQuestion.classList.add('question');
+      newQuestion.innerHTML = `
+        <legend>Question ${questionCount}</legend>
+        <textarea name="q${questionCount}" required placeholder="Enter question here"></textarea><br>
+        A: <input type="text" name="q${questionCount}_a" required><br>
+        B: <input type="text" name="q${questionCount}_b" required><br>
+        C: <input type="text" name="q${questionCount}_c" required><br>
+        D: <input type="text" name="q${questionCount}_d" required><br>
+        Correct Answer:
+        <select name="q${questionCount}_answer" required>
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+          <option value="D">D</option>
+        </select>
+      `;
+      
+      // Append the new question to the questions container
+      document.getElementById('questions-container').appendChild(newQuestion);
+    }
+  </script>
+
+</body>
+</html>
+
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teacher Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background-color: #f0f2f5;
+    }
+
+    .topbar {
+      background: linear-gradient(to right, #0d47a1, #1565c0);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .teacher-profile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .profile-pic {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+      background-image: url('{{ url_for('static', filename='emvi-logo.jpeg') }}');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .teacher-info div {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      width: fit-content;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .logout {
+      background: white;
+      border: none;
+      color: #0d47a1;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .tabs {
+      display: flex;
+      background: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab {
+      padding: 14px 24px;
+      cursor: pointer;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .tab:hover {
+      background: #f0f0f0;
+    }
+
+    .tab.active {
+      background: #0d47a1;
+      color: white;
+    }
+
+    .main-content {
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .upload-section, .submissions-section {
+      background: white;
+      flex: 1;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.07);
+    }
+
+    .upload-section h3, .submissions-section h3 {
+      margin-bottom: 10px;
+      color: #0d47a1;
+    }
+
+    .submissions-list div {
+      background: #f6f8fa;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border-left: 4px solid #0d47a1;
+    }
+
+    fieldset {
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      padding: 10px;
+    }
+
+    textarea, input[type="text"], select {
+      width: 100%;
+      padding: 8px;
+      margin: 4px 0;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #0d47a1;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #1565c0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      word-wrap: break-word;
+    }
+
+    th {
+      background-color: #f0f0f0;
+    }
+
+    th:nth-child(2), td:nth-child(2),
+    th:nth-child(3), td:nth-child(3) {
+      text-align: center;
+      width: 25%;
+    }
+
+    th:nth-child(1), td:nth-child(1) {
+      width: 50%;
+    }
+
+    .performance-btn {
+      display: inline-flex;
+      align-items: center;
+      background-color: #4CAF8D;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      text-decoration: none;
+    }
+
+    .performance-btn:hover {
+      background-color: #3a8b6e;
+    }
+
+    .performance-btn img {
+      width: 14px;
+      height: 14px;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="teacher-profile">
+      <div class="profile-pic"></div>
+      <div class="teacher-info">
+        <div>{{ name }}</div>
+        <div>Subject: Computer Science</div>
+      </div>
+    </div>
+    <button class="logout" onclick="window.location.href='/logout'">Logout</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showSection('dashboard-section', this)">Dashboard</div>
+    <div class="tab" onclick="showSection('upload-section', this)">Upload Test</div>
+    <div class="tab" onclick="showSection('results-section', this)">View Results</div>
+    <div class="tab">More ▸</div>
+  </div>
+
+  <div class="main-content">
+    <div id="dashboard-section" style="display: flex; gap: 20px; width: 100%;">
+      <div class="upload-section" style="flex: 1;">
+        <h3>Welcome, {{ name }}</h3>
+        <p>Here’s a quick overview of your class activity:</p>
+        <div style="display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
+          <div style="background: #e3f2fd; padding: 20px; border-radius: 12px; flex: 1; min-width: 200px;">
+            <h4 style="color: #0d47a1;">Assignments Created</h4>
+            <p style="font-size: 24px; font-weight: bold;">{{ assignments|length }}</p>
+          </div>
+          <div style="background: #f1f8e9; padding: 20px; border-radius: 12px; flex: 1; min-width: 200px;">
+            <h4 style="color: #33691e;">Total Submissions</h4>
+            <p style="font-size: 24px; font-weight: bold;">{{ submissions|length }}</p>
+          </div>
+          <div style="background: #fff3e0; padding: 20px; border-radius: 12px; flex: 1; min-width: 200px;">
+            <h4 style="color: #ef6c00;">Average Score</h4>
+            <p style="font-size: 24px; font-weight: bold;">
+              {% if avg_score is defined %}
+                {{ avg_score }}%
+              {% else %}
+                N/A
+              {% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="submissions-section">
+        <h3>Recent Submissions</h3>
+        <div class="submissions-list">
+          {% for submission in submissions %}
+            <div>{{ submission.student_name }} - {{ submission.assignment_title }} ({{ submission.timestamp }})</div>
+          {% else %}
+            <div>No submissions yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div id="upload-section" style="display: none; width: 100%;">
+      <div class="upload-section">
+        <h3>Create New Assignment</h3>
+        <form action="/create-assignment" method="POST" id="assignment-form">
+          Title: <input type="text" name="title" required><br><br>
+          <div id="questions-container">
+            <fieldset class="question">
+              <legend>Question 1</legend>
+              <textarea name="q1" required placeholder="Enter question here"></textarea><br>
+              A: <input type="text" name="q1_a" required><br>
+              B: <input type="text" name="q1_b" required><br>
+              C: <input type="text" name="q1_c" required><br>
+              D: <input type="text" name="q1_d" required><br>
+              Correct Answer:
+              <select name="q1_answer" required>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+              </select>
+            </fieldset>
+          </div>
+          <button type="button" onclick="addQuestion()">Add Another Question</button><br><br>
+          <button type="submit">Create Assignment</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="results-section" style="display: none; width: 100%;">
+      <div class="upload-section">
+        <h3>Results</h3>
+        {% if results %}
+          {% for entry in results %}
+            <div style="margin-bottom: 24px;">
+              <h4>{{ entry.assignment.title }}</h4>
+              {% if entry.submissions %}
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Student</th>
+                      <th>Score</th>
+                      <th>Performance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for sub in entry.submissions %}
+                      <tr>
+                        <td>{{ sub.student }}</td>
+                        <td>{{ sub.score }}</td>
+                        <td>
+                          <a href="{{ url_for('performance', username=sub.student, assignment_id=entry.assignment._id) }}" class="performance-btn">
+                            <img src="{{ url_for('static', filename='performance-icon.png') }}" alt="Icon">
+                            Performance
+                          </a>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              {% else %}
+                <p>No one has submitted “{{ entry.assignment.title }}” yet.</p>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <p>You haven't created any assignments yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showSection(sectionId, tabElement) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      tabElement.classList.add('active');
+      document.getElementById('dashboard-section').style.display = 'none';
+      document.getElementById('upload-section').style.display = 'none';
+      document.getElementById('results-section').style.display = 'none';
+      document.getElementById(sectionId).style.display = 'flex';
+    }
+
+    let questionCount = 1;
+    function addQuestion() {
+      questionCount++;
+      const newQuestion = document.createElement('fieldset');
+      newQuestion.classList.add('question');
+      newQuestion.innerHTML = `
+        <legend>Question ${questionCount}</legend>
+        <textarea name="q${questionCount}" required placeholder="Enter question here"></textarea><br>
+        A: <input type="text" name="q${questionCount}_a" required><br>
+        B: <input type="text" name="q${questionCount}_b" required><br>
+        C: <input type="text" name="q${questionCount}_c" required><br>
+        D: <input type="text" name="q${questionCount}_d" required><br>
+        Correct Answer:
+        <select name="q${questionCount}_answer" required>
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+          <option value="D">D</option>
+        </select>
+      `;
+      document.getElementById('questions-container').appendChild(newQuestion);
+    }
+  </script>
+</body>
+</html>
