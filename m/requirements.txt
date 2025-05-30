@@ -1,9 +1,10 @@
+flask
+flask_pymongo
 tensorflow
 keras
 pandas
 numpy
-jupyter
-notebook
-tqdm
 opencv-contrib-python
-scikit-learn 
+scikit-learn
+tqdm
+
